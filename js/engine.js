@@ -80,13 +80,14 @@
       s.special = null;       // 'offesissimo' | 'arrabbiatissimo'
       s.offStage = null;      // 'hit' (colpisce al prossimo giro) | 'calm' (si calma al prossimo giro)
       s.arrab = 0;            // counter Arrabbiatissimo
-      s.irreqDone = false;    // Irrequieto già soddisfatto in questo turno
+      s.irreqDone = false;    // Irrequieto già soddisfatto in questo turno (non accetta altro)
+      s.noAdvance = false;    // la ruota è già avanzata (Arrabbiatissimo calmato): non avanzare al prossimo giro
       s.heafy = { pos: this.posOf('camera'), dir: 1, carriedBy: null, carry: null };
       const pl = cfg.players || [{ name: 'G1', kind: 'ai' }, { name: 'G2', kind: 'ai' }];
       s.players = [0, 1].map((i) => ({
         id: i, name: pl[i].name || ('G' + (i + 1)), kind: pl[i].kind || 'ai', level: pl[i].level || null,
         pos: this.posOf(i === 0 ? 'cucina' : 'mansarda'),
-        pf: 0, rancor: 0, hand: [], j2: this.rules.j2Charges, interacted: false,
+        pf: 0, rancor: 0, hand: [], j2: this.rules.j2Charges, interacted: false, waste: 0,
       }));
       s.turn = 0; s.first = 0; s.phase = 'setup'; s.over = false;
       s.lastFlows = null;
@@ -193,7 +194,14 @@
         const a = this.score(0), c = this.score(1);
         s.first = a < c ? 0 : c < a ? 1 : this.rollOff(0, 1, 'Sera, parità: chi parte').win;
       } else s.first = 0;
-      let b = this.say('turn', `━━ Turno ${s.turn}/${this.rules.turns} · ${Game.periodName(per)} · parte ${this.pn(s.first)} ━━`, s.first);
+      let b;
+      const tp = this.rules.turns / 3;
+      if ((s.turn - 1) % tp === 0) {
+        const who = per === 0 ? `Per tutto il mattino parte per primo ${this.pn(0)} (G1).` : per === 1 ? `Per tutto il pomeriggio parte per primo ${this.pn(1)} (G2).` : 'Di sera parte per primo chi ha meno punti (a parità, dado).';
+        b = this.say('period', `${['🌄', '☀️', '🌙'][per]} Comincia ${['il MATTINO', 'il POMERIGGIO', 'la SERA'][per]} (turni ${s.turn}–${s.turn + tp - 1}). ${who}${per > 0 ? ' Ogni stanza ha ricevuto di nuovo la sua risorsa.' : ''}`, -1, { period: per });
+        if (b) yield b;
+      }
+      b = this.say('turn', `━━ Turno ${s.turn}/${this.rules.turns} · ${Game.periodName(per)} · parte ${this.pn(s.first)} ━━`, s.first);
       if (b) yield b;
 
       yield* this.heafyPhase();
@@ -240,6 +248,7 @@
         this.dropCarry();
       }
       let skipInteract = false;
+      const skipAdv = s.noAdvance; s.noAdvance = false;
       if (s.special === 'arrabbiatissimo') {
         b = this.say('heafy', '🔥 Heafy Arrabbiatissimo: non cambia mood, resta fermo');
         if (b) yield b;
@@ -269,12 +278,12 @@
           b = this.say('heafy', '😮‍💨 Heafy si calma');
           if (b) yield b;
         }
-        if (s.turn > 1) s.wheelIdx = (s.wheelIdx + 1) % s.wheel.length;
+        if (s.turn > 1 && !skipAdv) s.wheelIdx = (s.wheelIdx + 1) % s.wheel.length;
         s.override = null;
         const m = this.curMood();
         this.stat('mood_' + m.id, -1);
         const dem = m.demand === 'any' ? 'qualsiasi risorsa' : m.demand ? this.resTxt(m.demand) : 'nessuna pretesa';
-        b = this.say('mood', `😼 Heafy è ${m.e} ${m.name} · pretesa: ${dem}`, -1, { mood: m.id });
+        b = this.say('mood', `😼 Heafy è ${m.e} ${m.name} · pretesa: ${dem}. ${FF.MOOD_MOVE[m.id]}`, -1, { mood: m.id });
         if (b) yield b;
         yield* this.moveHeafy();
       }
@@ -390,11 +399,17 @@
         if (picks.length === 2) {
           take(picks); this.addPF(pid, 2, 'arrab_calmato');
           s.special = null; s.offStage = null; s.arrab = 0;
-          b = this.say('pf', `🔥 ${this.pn(pid)} dà ${picks.map((r) => this.resTxt(r)).join(' + ')} → +2 PF, Heafy Arrabbiatissimo si calma`, pid);
+          s.wheelIdx = (s.wheelIdx + 1) % s.wheel.length; s.override = null; s.noAdvance = true; // la ruota avanza: non si torna al vecchio mood
+          const nm = this.curMood();
+          b = this.say('pf', `🔥 ${this.pn(pid)} dà ${picks.map((r) => this.resTxt(r)).join(' + ')} → +2 PF. Heafy Arrabbiatissimo si calma e la ruota avanza: ora è ${nm.e} ${nm.name}`, pid);
         } else {
           this.addPF(pid, -1, 'arrab_non_soddisfatto');
           b = this.say('pf', `🔥 ${this.pn(pid)} non riesce a dare 2 risorse → −1 PF`, pid);
         }
+        if (b) yield b; return;
+      }
+      if (s.irreqDone) { // Irrequieto ha già avuto la sua risorsa: non accetta altro in questo turno
+        b = this.say('heafy', `😤 Heafy ha già avuto la sua risorsa: non accetta altro da ${this.pn(pid)}`, pid);
         if (b) yield b; return;
       }
       if (m.id === 'bisognoso') {
@@ -414,7 +429,7 @@
         } else if (picks.length) {
           take(picks); this.addPF(pid, 2, 'irrequieto_ok'); s.irreqDone = true;
           s.override = 'neutro';
-          b = this.say('pf', `😤 ${this.pn(pid)} dà ${this.resTxt(picks[0])} → +2 PF, Heafy diventa 😐 Neutro`, pid);
+          b = this.say('pf', `😤 ${this.pn(pid)} dà ${this.resTxt(picks[0])} → +2 PF, Heafy si calma (😐 Neutro) e non accetta altro`, pid);
         } else {
           this.addPF(pid, -1, 'nulla');
           b = this.say('pf', `😤 ${this.pn(pid)} non dà nulla → −1 PF`, pid);
@@ -481,7 +496,7 @@
           b = this.say('act', `B2: ${this.pn(pid)} non raccoglie`, pid); if (b) yield b;
         } else if (code === 'C1') {
           if (p.interacted) {
-            this.stat('c1_sprecata', pid);
+            this.stat('c1_sprecata', pid); p.waste += 0.6;
             b = this.say('act', `C1: ${this.pn(pid)} ha già interagito con Heafy in questo turno → azione saltata`, pid);
             if (b) yield b;
           } else if (p.pos === h.pos && (h.carriedBy == null || h.carriedBy === pid)) {
@@ -489,7 +504,7 @@
             b = this.say('act', `C1: ${this.pn(pid)} interagisce con Heafy`, pid); if (b) yield b;
             yield* this.interact(pid, false);
           } else {
-            this.stat('c1_senza_heafy', pid);
+            this.stat('c1_senza_heafy', pid); p.waste += p.hand.length ? 1.5 : 0.6;
             if (p.hand.length) {
               const ans = yield* this.ask({ type: 'abandon', player: pid, hand: p.hand.slice() });
               const r = p.hand.includes(ans) ? ans : p.hand[0];
@@ -521,11 +536,11 @@
       const near = h.pos === p.pos;
       let b;
       if (p.hand.length >= this.rules.handLimit) {
-        this.stat('b1_mano_piena', pid);
+        this.stat('b1_mano_piena', pid); p.waste += 0.2;
         b = this.say('act', `B1: ${this.pn(pid)} ha la mano piena → niente`, pid); if (b) yield b; return;
       }
       if (!room.length) {
-        this.stat('b1_vuota', pid);
+        this.stat('b1_vuota', pid); p.waste += 0.2;
         b = this.say('act', `B1: ${this.pn(pid)} — ${this.rname(p.pos)} è vuota`, pid); if (b) yield b; return;
       }
       const options = [...new Set(room)];
@@ -540,14 +555,14 @@
       room.splice(room.indexOf(pick), 1); p.hand.push(pick);
       this.stat('b1_raccolte', pid);
       b = this.say('act', `B1: ${this.pn(pid)} raccoglie ${this.resTxt(pick)} in ${this.rname(p.pos)}`, pid); if (b) yield b;
-      if (near) this.penaltyNear(pid, 'B1');
+      if (near) { b = this.penaltyNear(pid, 'B1'); if (b) yield b; }
     }
 
     // raccolta nella stanza di Heafy senza jolly: −1 PF e (se possibile) Offesissimo
     penaltyNear(pid, via) {
       this.addPF(pid, -1, 'raccolta_vicino_heafy');
       const trig = this.triggerOffesissimo(pid);
-      this.emit('pf', `⚠ ${this.pn(pid)} ha raccolto con Heafy presente → −1 PF${trig ? ' · 😡 Heafy diventa Offesissimo!' : ''}`, pid);
+      return this.say('pf', `⚠ ${this.pn(pid)} ha raccolto con Heafy presente → −1 PF${trig ? ' · 😡 Heafy diventa Offesissimo!' : ''}`, pid);
     }
 
     // ───────────────────────── Jolly (J2) ─────────────────────────

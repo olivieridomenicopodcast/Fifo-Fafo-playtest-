@@ -31,17 +31,17 @@
   };
 
   // ───────────────────────── setup ─────────────────────────
-  const SPEEDS = { step: 'Passo-passo', slow: 'Lento', normal: 'Normale', fast: 'Veloce', instant: 'Istantaneo' };
+  const SPEEDS = { step: 'Manuale (clic per avanzare)', slow: 'Lento', normal: 'Normale', fast: 'Veloce', instant: 'Istantaneo' };
   const SPEED_MS = { slow: 1500, normal: 800, fast: 280, instant: 0 };
 
   UI.openSetup = function (mode) {
     UI.screen('setup');
     const el = $('#s-setup');
-    const last = UI.store.get('setup_' + mode, {});
+    const last = UI.store.get('setup2_' + mode, {});
     const name = UI.store.get('pname', 'Niky');
-    const speedDef = last.speed || (mode === 'watch' ? 'normal' : 'normal');
+    const speedDef = last.speed || (mode === 'watch' ? 'normal' : 'step');
     const title = { ai: '🤖 Contro l\'AI', hotseat: '👥 Due giocatori', watch: '🍿 AI contro AI' }[mode];
-    const speedSeg = `<div class="field"><label>Velocità delle azioni</label><div class="seg" id="su-speed">${Object.entries(SPEEDS).map(([k, v]) => `<button data-v="${k}" class="${k === speedDef ? 'sel' : ''}">${v}</button>`).join('')}</div></div>`;
+    const speedSeg = `<div class="field"><label>Messaggi delle mosse</label><div class="seg" id="su-speed">${Object.entries(SPEEDS).map(([k, v]) => `<button data-v="${k}" class="${k === speedDef ? 'sel' : ''}">${v}</button>`).join('')}</div></div>`;
     const levelSeg = (id, def) => `<div class="seg" id="${id}">${Object.entries(FF.LEVELS).map(([k, v]) => `<button data-v="${k}" class="${k === def ? 'sel' : ''}">${v}</button>`).join('')}</div>`;
     let body = '';
     if (mode === 'ai') {
@@ -89,7 +89,7 @@
         players = [{ name: 'AI ' + FF.LEVELS[l0], kind: 'ai', level: l0 }, { name: 'AI ' + FF.LEVELS[l1], kind: 'ai', level: l1 }];
         saved = { l0, l1, seed: $('#su-seed').value.trim(), speed, rules };
       }
-      UI.store.set('setup_' + mode, saved);
+      UI.store.set('setup2_' + mode, saved);
       UI.startSession({ mode, seed, rules, players, speed });
     };
   };
@@ -114,12 +114,13 @@
         const here = s.res[pos];
         if (hand >= game.rules.handLimit) out.push([code, 'mano piena: niente', 'note-bad']);
         else if (!here.length) out.push([code, `${game.rname(pos)} è vuota (ora)`, 'note-bad']);
-        else if (hpos === pos) out.push([code, `⚠ Heafy è qui: raccogliere = −1 PF e Offesissimo`, 'note-bad']);
+        else if (hpos === pos) out.push([code, `⚠ Heafy è qui: raccogliere = −1 PF e Offesissimo`, 'note-bad', `B1: in ${game.rname(pos)} c'è Heafy. Raccogliere senza Jolly fa arrabbiare Heafy: −1 PF e diventa Offesissimo.`]);
         else { out.push([code, `raccogli ${here.map((r) => RES[r].i).join('/')} in ${game.rname(pos)}`, 'note-ok']); hand++; }
       } else if (code === 'C1') {
         if (p.interacted) out.push([code, 'hai già interagito in questo turno', 'note-bad']);
         else if (hpos === pos) out.push([code, '✔ Heafy è qui: interagisci', 'note-ok']);
-        else out.push([code, p.hand.length || hand ? '✘ Heafy non è qui: dovrai abbandonare una risorsa' : 'Heafy non è qui', 'note-bad']);
+        else out.push([code, p.hand.length || hand ? '✘ Heafy non è qui: dovrai abbandonare una risorsa' : 'Heafy non è qui', 'note-bad',
+          (p.hand.length || hand) ? `C1: quando la esegui sei in ${game.rname(pos)} ma Heafy è in ${game.rname(hpos)}. Non puoi interagire e dovrai ABBANDONARE una risorsa in quella stanza. Metti C1 dopo la carta A che ti porta da Heafy!` : '']);
       } else if (code === 'J2') {
         out.push([code, '✨ potrai: spostarti di 1-2, raccolta sicura, prendere/depositare Heafy', '']);
       }
@@ -129,11 +130,11 @@
 
   function giveOutcome(game, d, sel) {
     const s = game.s;
-    if (d.special === 'arrabbiatissimo') return sel.length === 2 ? ['+2 PF · lo calmi', 'good'] : ['−1 PF', 'bad'];
+    if (s.irreqDone) return ['Heafy ha già avuto la sua risorsa: non accetta altro', ''];
+    if (d.special === 'arrabbiatissimo') return sel.length === 2 ? ['+2 PF · lo calmi e la ruota avanza', 'good'] : ['−1 PF', 'bad'];
     if (d.mood === 'bisognoso') return sel[0] === 'paletta' ? ['+3 PF', 'good'] : ['−1 PF · diventa Irrequieto', 'bad'];
     if (d.mood === 'irrequieto') {
-      if (s.irreqDone) return ['già soddisfatto: non accetta altro', ''];
-      return sel.length ? ['+2 PF · diventa Neutro', 'good'] : ['−1 PF', 'bad'];
+      return sel.length ? ['+2 PF · si calma, non accetta altro', 'good'] : ['−1 PF', 'bad'];
     }
     const m = MOODS[d.mood];
     if (m.demand) {
@@ -160,7 +161,7 @@
       this.fast = !!(history && history.length); // fast-forward durante il ripristino
     }
 
-    dispose() { this.cancelled = true; if (this.timer) clearTimeout(this.timer); this.waiter = null; }
+    dispose() { this.cancelled = true; if (this.timer) clearTimeout(this.timer); this.waiter = null; if (this.keyHandler) document.removeEventListener('keydown', this.keyHandler); }
 
     // ── interfaccia ──
     buildUI() {
@@ -169,20 +170,29 @@
       el.innerHTML = `<div class="gbar"><span class="turn" id="g-turn"></span><span class="chip" id="g-per"></span><span class="chip" id="g-first"></span><span style="flex:1"></span>
         <div class="ctrl" id="g-ctrl"></div></div>
         <div class="glayout"><div>
+          <div class="announce" id="g-announce"></div>
           <div class="tablefelt"><div class="board" id="g-board"></div></div>
           <div class="panel action" id="g-action"></div>
         </div><div>
           <div class="panel"><div class="ptitle">Giocatori</div><div id="g-players"></div></div>
-          <div class="panel"><div class="ptitle">Ruota dei Mood <span class="small muted">tocca per l'aiuto</span></div><div id="g-wheel"></div></div>
+          <div class="panel"><div class="ptitle">Heafy e la ruota dei mood</div><div id="g-wheel"></div></div>
           <div class="panel"><div class="ptitle">Cronaca</div><div class="logbox" id="g-log"></div></div>
+          <div class="panel"><details open><summary class="ptitle" style="cursor:pointer">Legenda</summary><div class="legend">${UI.legendHTML()}</div></details></div>
         </div></div>`;
       const c = $('#g-ctrl');
       c.innerHTML = `<select id="g-speed" title="Velocità">${Object.entries(SPEEDS).map(([k, v]) => `<option value="${k}" ${k === this.speed ? 'selected' : ''}>${v}</option>`).join('')}</select>
         <button class="btn sm" id="g-pause">⏸</button><button class="btn sm" id="g-next">⏭ Avanti</button>
+        <button class="btn sm ${this.humanSeats.length ? '' : 'hidden'}" id="g-skip" title="Salta i messaggi fino alla tua prossima scelta">⏩ Fino alla mia mossa</button>
         <button class="btn sm" id="g-note" title="Aggiungi una nota al log">📝</button><button class="btn sm" id="g-menu">☰</button>`;
       $('#g-speed').onchange = (e) => { this.speed = e.target.value; this.paused = false; this.syncCtrl(); this.release(); };
       $('#g-pause').onclick = () => { this.paused = !this.paused; this.syncCtrl(); if (!this.paused) this.release(); };
       $('#g-next').onclick = () => this.release();
+      $('#g-skip').onclick = () => { this.skipTo = true; this.release(); };
+      $('#g-announce').addEventListener('click', (e) => { if (this.waiter && !e.target.closest('button')) this.release(); });
+      this.keyHandler = (e) => {
+        if ((e.code === 'Space' || e.code === 'Enter') && this.waiter && !document.querySelector('.overlay') && !['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes((document.activeElement || {}).tagName)) { e.preventDefault(); this.release(); }
+      };
+      document.addEventListener('keydown', this.keyHandler);
       $('#g-note').onclick = () => this.addNote();
       $('#g-menu').onclick = () => this.menu();
       this.game.onEvent = (ev) => this.onEvent(ev);
@@ -203,10 +213,10 @@
     renderAll(active) {
       if (this.cancelled) return;
       const g = this.game, s = g.s;
-      $('#g-turn').textContent = `Turno ${Math.min(s.turn, g.rules.turns)}/${g.rules.turns}`;
+      $('#g-turn').textContent = `Turno ${Math.min(Math.max(1, s.turn), g.rules.turns)}/${g.rules.turns}`;
       const per = g.period(Math.max(1, s.turn));
       const pc = $('#g-per'); pc.textContent = ['🌄 Mattino', '☀️ Pomeriggio', '🌙 Sera'][per]; pc.className = 'chip per' + per;
-      const fc = $('#g-first'); fc.textContent = s.turn ? `Primo: ${s.players[s.first].name}` : ''; fc.className = 'chip p' + s.first;
+      const fc = $('#g-first'); fc.textContent = s.turn ? `Primo: ${s.players[s.first].name}` : ''; fc.className = 'chip p' + s.first + (s.turn ? '' : ' hidden');
       UI.renderBoard($('#g-board'), g, { targets: this.targets });
       UI.renderPlayers($('#g-players'), g, { active: active == null ? (s.phase === 'resolve' ? this.currentActor : null) : active });
       UI.renderWheel($('#g-wheel'), g);
@@ -215,20 +225,50 @@
 
     // ── pacing ──
     release() { if (this.timer) { clearTimeout(this.timer); this.timer = null; } const w = this.waiter; this.waiter = null; if (w) w(); }
+    // messaggio grande sopra al tabellone
+    announce(ev, opts) {
+      const box = $('#g-announce'); if (!box) return;
+      opts = opts || {};
+      const g = this.game, SPR = FF.Sprites;
+      let icon;
+      if (ev.k === 'period') icon = `<span class="aemoji">${['🌄', '☀️', '🌙'][ev.d.period]}</span>`;
+      else if (ev.k === 'end') icon = '<span class="aemoji">🏆</span>';
+      else if (ev.k === 'dice') icon = '<span class="aemoji">🎲</span>';
+      else if (ev.k === 'turn') icon = '<span class="aemoji">📅</span>';
+      else if (ev.k === 'mood' || ev.k === 'heafy') icon = SPR.cat(ev.d && ev.d.mood ? ev.d.mood : g.curMood().id);
+      else if (ev.p >= 0) icon = `<span class="apawn">${SPR.pawn(ev.p)}</span>`;
+      else icon = SPR.cat(g.curMood().id);
+      const text = ev.text.replace(/━+/g, '').trim();
+      const sub = ev.k === 'mood' && ev.d && UI.MOOD_HELP[ev.d.mood] ? `<div class="asub">${esc(UI.MOOD_HELP[ev.d.mood])}</div>` : '';
+      const who = ev.p === 0 ? 'p0' : ev.p === 1 ? 'p1' : '';
+      const per = ev.k === 'period' ? ' per' + ev.d.period : '';
+      box.className = `announce k-${ev.k} ${who}${per}${opts.prompt ? ' prompt' : ''}`;
+      box.innerHTML = `<div class="aicon">${icon}</div><div class="atext"><div class="amain">${esc(text)}</div>${sub}</div>${opts.button ? '<button class="btn primary abtn" id="a-next">Avanti ▶</button>' : ''}`;
+      const b = $('#a-next'); if (b) b.onclick = () => this.release();
+    }
+    promptFor(d) {
+      const n = this.game.s.players[d.player].name;
+      return {
+        flow: `Tocca a ${n}: scegli il tuo Flow`, give: d.passive ? `Heafy è con ${n}: deve dargli qualcosa` : `${n} interagisce con Heafy: cosa gli dai?`,
+        b1: `${n}: cosa raccogli?`, abandon: `${n}: devi abbandonare una risorsa`, j2step: `${n}: usa il Jolly ✨`,
+      }[d.type] || `Tocca a ${n}`;
+    }
     async pace(ev) {
       if (this.fast || this.cancelled) return;
-      const stepping = this.speed === 'step' || this.paused;
+      const always = (ev.k === 'period' || ev.k === 'end') && this.speed !== 'instant';
+      const stepping = this.speed === 'step' || this.paused || always;
+      if (this.skipTo && !always) { this.announce(ev); return; }
+      this.setAction('<div class="muted" style="font-weight:700">Segui i messaggi qui sopra ☝️</div>');
       if (stepping) {
-        this.setAction(`<h3>${esc(ev.text)}</h3><div class="muted small">Premi “⏭ Avanti” per proseguire.</div><div class="btn-row" style="margin-top:8px"><button class="btn primary" id="a-next">⏭ Avanti</button></div>`);
-        const b = $('#a-next'); if (b) b.onclick = () => this.release();
+        this.announce(ev, { button: true });
         await new Promise((r) => { this.waiter = r; });
         return;
       }
       const base = SPEED_MS[this.speed];
+      this.announce(ev);
       if (!base) { if (ev.i % 12 === 0) await UI.sleep(0); return; }
-      const w = (WEIGHT[ev.k] == null ? 1 : WEIGHT[ev.k]) * (this.humanSeats.includes(ev.p) ? 0.7 : 1);
-      this.setAction(`<h3>${esc(ev.text)}</h3><div class="muted small">…</div>`);
-      await new Promise((r) => { this.waiter = r; this.timer = setTimeout(() => { this.timer = null; this.waiter = null; r(); }, base * w); });
+      const w = (WEIGHT[ev.k] == null ? 1 : WEIGHT[ev.k]) * (this.humanSeats.includes(ev.p) ? 0.8 : 1);
+      await new Promise((r) => { this.waiter = r; this.timer = setTimeout(() => { this.timer = null; this.waiter = null; r(); }, base * w * 1.4); });
     }
 
     // ── ciclo principale ──
@@ -238,7 +278,7 @@
       UI.$('#tb-info').innerHTML = `<span class="chip">seed ${esc(this.cfg.seed)}</span>`;
       this.renderAll(null);
       const log = $('#g-log'); log.innerHTML = '';
-      if (this.mode === 'watch') this.setAction('<h3>Si parte…</h3>');
+      this.announce({ k: 'sys', p: -1, text: 'Si comincia! I messaggi delle mosse compaiono qui.', d: {} });
       const it = g.run();
       let r = it.next();
       while (!r.done) {
@@ -256,6 +296,7 @@
         this.currentActor = d.player;
         this.renderAll(d.player);
         const pl = this.cfg.players[d.player];
+        if (pl.kind === 'human') { this.skipTo = false; this.announce({ k: 'prompt', p: d.player, text: this.promptFor(d), d: {} }, { prompt: true }); }
         let ans;
         if (pl.kind === 'human') ans = await this.humanDecide(d);
         else { ans = this.aiDecide(d); }
@@ -337,6 +378,7 @@
           this.setAction(`<h3>${FF.Sprites.pawn(pid, 'inl')} ${esc(p.name)}: costruisci il tuo Flow</h3>
             <div class="small muted" style="margin-bottom:6px">📍 Sei in ${esc(g.rname(p.pos))} · 🐱 Heafy in ${esc(g.rname(g.s.heafy.pos))} · mano: ${p.hand.map((r) => RES[r].i).join(' ') || 'vuota'}</div>
             ${groups}<div class="lbl" style="margin-top:6px">Il tuo Flow (ordine di esecuzione)</div><div class="flowrow">${row}</div>
+            ${prev.filter((x) => x[3]).map((x) => `<div class="warnbox">⚠️ <b>Attenzione</b> — ${esc(x[3])}</div>`).join('')}
             ${prev.length ? `<div class="pv">${prev.map(([c, t, cls]) => `<div class="${cls}"><b>${c}</b> ${esc(t)}</div>`).join('')}<div class="muted">Stima: non considera cosa farà l'avversario.</div></div>` : ''}
             <div class="btn-row"><button class="btn" id="f-hint" title="Chiede un consiglio all'AI difficile">💡 Suggerimento</button><button class="btn" id="f-clear">Azzera</button>
             <button class="btn primary" id="f-ok" style="flex:1" ${full ? '' : 'disabled'}>Conferma Flow</button></div>`);
@@ -360,7 +402,15 @@
               render(); UI.toast('Suggerimento: ' + f.join(' → '));
             }, 30);
           };
-          $('#f-ok').onclick = () => { if (order.length === 4) resolve(order.map((t) => chosen[t])); };
+          $('#f-ok').onclick = () => {
+            if (order.length !== 4) return;
+            const danger = prev.filter((x) => x[3]);
+            if (!danger.length) return resolve(order.map((t) => chosen[t]));
+            const dlg = UI.modal(`<div class="bigcat" style="width:90px;height:90px">${FF.Sprites.cat('bisognoso')}</div><h2>Sicuro?</h2>${danger.map((x) => `<p class="warnbox" style="text-align:left">⚠️ ${esc(x[3])}</p>`).join('')}
+              <div class="btn-row" style="margin-top:14px"><button class="btn primary" style="flex:1" data-no>← Torna a modificare</button><button class="btn danger" data-yes>Confermo comunque</button></div>`, { dismiss: false });
+            dlg.el.querySelector('[data-no]').onclick = dlg.close;
+            dlg.el.querySelector('[data-yes]').onclick = () => { dlg.close(); resolve(order.map((t) => chosen[t])); };
+          };
         };
         render();
       });

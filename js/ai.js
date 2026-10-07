@@ -37,7 +37,7 @@
   function evalState(game, pid) {
     const s = game.s, opp = 1 - pid;
     const left = Math.max(0, game.rules.turns - s.turn) / game.rules.turns;
-    return (game.score(pid) - game.score(opp))
+    return (game.score(pid) - game.score(opp)) - (s.players[pid].waste - s.players[opp].waste)
       + handValue(game, s.players[pid].hand) - 0.4 * handValue(game, s.players[opp].hand)
       + 0.8 * left * (s.players[pid].j2 - s.players[opp].j2);
   }
@@ -61,7 +61,7 @@
           return a.slice(0, 2);
         }
         if (d.mood === 'bisognoso') return hand.includes('paletta') ? ['paletta'] : [];
-        if (d.mood === 'irrequieto' && s.irreqDone) return [];
+        if (s.irreqDone) return [];
         const m = MOODS[d.mood];
         if (m.demand && m.demand !== 'any' && hand.includes(m.demand)) return [m.demand];
         return [leastValuable(game, hand)];

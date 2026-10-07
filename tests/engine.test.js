@@ -62,8 +62,13 @@ test('3 risorse sbagliate → Arrabbiatissimo (counter si azzera solo allora); 2
   for (let i = 0; i < 3; i++) { g.s.players[0].hand = ['cuscino']; run(g, g.interact(0, false), [['cuscino']]); }
   assert.equal(g.s.special, 'arrabbiatissimo'); assert.equal(g.s.arrab, 0);
   g.s.players[1].hand = ['snack', 'coccola'];
+  const idx = g.s.wheelIdx;
   run(g, g.interact(1, false), [['snack', 'coccola']]);
   assert.equal(g.s.players[1].pf, 2); assert.equal(g.s.special, null);
+  assert.equal(g.s.wheelIdx, (idx + 1) % 10, 'la ruota avanza quando si calma'); assert.equal(g.s.noAdvance, true);
+  // al giro dopo la ruota NON avanza di nuovo: il mood "nuovo" fa il suo turno completo
+  g.s.turn = 2; run(g, g.heafyPhase(), () => []);
+  assert.equal(g.s.wheelIdx, (idx + 1) % 10); assert.equal(g.s.noAdvance, false);
 });
 
 test('Arrabbiatissimo: con una sola risorsa −1 PF e nessuna risorsa consumata', () => {
@@ -93,8 +98,7 @@ test('Irrequieto: qualsiasi risorsa +2 → Neutro; non accetta altro; se non sod
   let g = mk(); setMood(g, 'irrequieto'); g.s.players[0].hand = ['snack']; g.s.players[1].hand = ['snack'];
   run(g, g.interact(0, false), [['snack']]);
   assert.equal(g.s.players[0].pf, 2); assert.equal(g.curMood().id, 'neutro');
-  g.s.override = 'irrequieto';
-  run(g, g.interact(1, false), [['snack']]);
+  run(g, g.interact(1, false), [['snack']]); // Irrequieto ha già avuto la sua risorsa
   assert.equal(g.s.players[1].pf, 0); assert.deepEqual(g.s.players[1].hand, ['snack']);
 
   g = mk(); setMood(g, 'irrequieto'); g.s.heafy.pos = 0; g.s.players[0].pos = 0; g.s.players[1].pos = 5;
@@ -204,8 +208,11 @@ test('Bisognoso attira il giocatore più vicino in Bagno', () => {
   assert.equal(g.s.heafy.pos, bag); assert.equal(g.s.players[0].pos, bag); assert.notEqual(g.s.players[1].pos, bag);
 });
 
-test('Coccolone: +1 PF a chi finisce il flow da Heafy', () => {
-  const g = mk(); setMood(g, 'coccolone'); g.s.players[0].pos = 2; g.s.heafy.pos = 2;
+test('Coccolone: nessun bonus per fermarsi (solo come variante coccolonePF)', () => {
+  let g = mk(); setMood(g, 'coccolone'); g.s.players[0].pos = 2; g.s.heafy.pos = 2;
+  run(g, g.resolveFlow(0, ['B2', 'C2', 'J1']), () => null);
+  assert.equal(g.s.players[0].pf, 0);
+  g = mk(1, { coccolonePF: 1 }); setMood(g, 'coccolone'); g.s.players[0].pos = 2; g.s.heafy.pos = 2;
   run(g, g.resolveFlow(0, ['B2', 'C2', 'J1']), () => null); // resta nella stanza di Heafy
   assert.equal(g.s.players[0].pf, 1);
 });
@@ -277,4 +284,20 @@ test('fuzz: invarianti su 400 partite con AI miste', () => {
     const dati = (g.stats.p[0].risorse_date || 0) + (g.stats.p[1].risorse_date || 0);
     assert.equal(total + dati, 27 - (g.stats.g.dispettoso_buttate || 0));
   }
+});
+
+test('inizio di ogni periodo: messaggio dedicato', () => {
+  const g = new FF.Game({ seed: 4, log: true });
+  const a = [FF.AI.create('easy', 1), FF.AI.create('easy', 2)];
+  FF.drive(g, g.run(), (game, d) => a[d.player].decide(game, d));
+  const per = g.events.filter((e) => e.k === 'period');
+  assert.equal(per.length, 3);
+  assert.deepEqual(per.map((e) => e.t), [1, 6, 11]);
+});
+
+test('C1 sprecata o senza Heafy pesa sulla valutazione dell\'AI (waste)', () => {
+  const g = mk(); clearRooms(g);
+  const p = g.s.players[0]; p.pos = 1; p.hand = ['snack']; g.s.heafy.pos = 5;
+  run(g, g.resolveFlow(0, ['C1', 'B2', 'J1']), ['snack']);
+  assert.ok(p.waste >= 1.5);
 });

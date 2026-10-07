@@ -40,6 +40,14 @@
     dispettoso:    { id: 'dispettoso',    name: 'Dispettoso',    e: '😈', demand: null,       move: 'standard' },
   };
   FF.MOOD_IDS = Object.keys(FF.MOODS);
+  // Che cosa fa Heafy con quel mood (movimento / azione)
+  FF.MOOD_MOVE = {
+    affamato: 'Corre dritto in Cucina.', assonnato: 'Resta fermo dov\'è.', curioso: 'Si sposta finché trova una stanza con risorse.',
+    coccolone: 'Resta fermo e vuole coccole.', giocherellone: 'Si sposta di 1 e sequestra una risorsa della stanza.',
+    irrequieto: 'Si sposta di 1; se nessuno lo soddisfa inverte la direzione.', neutro: 'Si sposta di 1.',
+    bisognoso: 'Corre in Bagno e attira il giocatore più vicino.', iperattivo: 'Si sposta di 2 stanze.',
+    dispettoso: 'Si sposta di 1 e butta via una risorsa dalla stanza.',
+  };
 
   // Mood "speciali": non stanno nella ruota
   FF.SPECIAL = {
@@ -66,7 +74,7 @@
     handLimit: 2,         // risorse massime in mano
     j2Charges: 2,         // attivazioni di J2 per partita
     noDemandGive: 1,      // PF per una risorsa data a un mood senza pretesa (Neutro, Curioso, ...)
-    coccolonePF: 1,       // PF per chi finisce il flow nella stanza di Heafy Coccolone
+    coccolonePF: 0,       // (variante) PF per chi finisce il flow nella stanza di Heafy Coccolone: tolto dalle regole base
     eveningLowestFirst: true, // Sera: va primo chi ha meno PF
   };
 
@@ -75,7 +83,7 @@
     handLimit: 'Limite risorse in mano',
     j2Charges: 'Cariche J2 per partita',
     noDemandGive: 'PF se dai una risorsa a un mood senza pretesa',
-    coccolonePF: 'PF per fermarsi da Heafy Coccolone',
+    coccolonePF: 'Variante: PF per fermarsi da Coccolone',
     eveningLowestFirst: 'Sera: parte chi ha meno PF',
   };
 

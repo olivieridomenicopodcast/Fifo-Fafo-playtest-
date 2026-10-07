@@ -13,6 +13,11 @@ Nessuna build: apri `index.html` (o `npm run serve` → http://localhost:8080). 
 
 Ogni partita ha un **seed**: stesso seed = stessa partita. Dal log si possono aggiungere note di playtest (📝).
 
+## Interfaccia di gioco
+- **Messaggi grandi** sopra la plancia per ogni mossa (anche dell'AI e di Heafy), da far avanzare a mano con *Avanti*, clic sul messaggio, Spazio o Invio; **⏩ Fino alla mia mossa** salta ai tuoi turni. Il cambio di momento della giornata (Mattino/Pomeriggio/Sera) chiede sempre il clic.
+- **Ruota dei mood** vera, che gira; **ORA / DOPO** con le pretese sempre visibili; Offesissimo e Arrabbiatissimo descritti anche quando non sono attivi.
+- **Legenda** delle icone nel pannello laterale; avvisi evidenti prima di confermare un Flow rischioso (es. C1 lontano da Heafy).
+
 ## Grafica e sprite
 Plancia 2D illustrata (le 9 stanze sono disegnate e si dispongono ad anello a caso), Heafy con un'espressione diversa per ogni mood, pedine, gettoni risorsa e carte da gioco: tutti sprite SVG disegnati nel codice (`js/ui/sprites.js`).
 `node tools/export-sprites.js` li esporta come file in `assets/sprites/*.svg` (riutilizzabili, ad es. in Godot) e genera la galleria `sprites.html`.

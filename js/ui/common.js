@@ -74,14 +74,14 @@
     affamato: 'Corre in Cucina. Vuole 🍬 Snack: +2 PF; altra risorsa +1 PF (counter Arrabbiatissimo); niente −1 PF e Offesissimo.',
     assonnato: 'Resta dov\'è. Vuole 🛏 Cuscino: +2 PF; altra risorsa +1 PF (counter); niente −1 PF e Offesissimo.',
     curioso: 'Si sposta finché trova una stanza con risorse. Nessuna pretesa: una risorsa data vale +1 PF (senza counter), niente −1 PF.',
-    coccolone: 'Resta fermo. Vuole 🤗 Coccola: +2 PF; altra +1 PF (counter); niente −1 PF e Offesissimo. Chi finisce il flow nella sua stanza: +1 PF.',
+    coccolone: 'Resta fermo. Vuole 🤗 Coccola: +2 PF; altra risorsa +1 PF (counter Arrabbiatissimo); niente −1 PF e Offesissimo.',
     giocherellone: 'Si sposta di 1; sequestra una risorsa a caso della stanza d\'arrivo e la rilascia al movimento successivo. Vuole 🎾 Giochino (+2 / +1 counter / −1 e Offesissimo).',
-    irrequieto: 'Vuole qualsiasi risorsa: +2 PF e diventa Neutro (non ne accetta altre). Se nessuno lo soddisfa, a fine turno inverte direzione e −1 PF a chi è con lui. Senza risorsa: −1 PF.',
+    irrequieto: 'Vuole una risorsa qualsiasi: la prima gli dà +2 PF e lo calma (Neutro), poi non ne accetta altre in quel turno. Se nessuno lo soddisfa, a fine turno inverte direzione e −1 PF a chi è con lui. Senza risorsa: −1 PF.',
     neutro: 'Si sposta di 1, nessuna pretesa. Una risorsa data vale +1 PF (senza counter), niente −1 PF.',
     bisognoso: 'Corre in Bagno e attira il giocatore più vicino. Solo 🪣 Paletta: +3 PF. Altrimenti −1 PF e diventa Irrequieto (non Offesissimo).',
     iperattivo: 'Si sposta di 2 stanze. Nessuna pretesa: risorsa data +1 PF, niente −1 PF.',
     dispettoso: 'Si sposta di 1 e butta fuori dal gioco una risorsa a caso dalla stanza d\'arrivo. Nessuna pretesa: risorsa +1 PF, niente −1 PF.',
-    offesissimo: 'Non accetta nulla. Al turno dopo si sposta di 1 e dà −2 PF a chi è nella stanza d\'arrivo; poi si calma e riprende la ruota.',
-    arrabbiatissimo: 'Resta fermo finché non gli dai 2 risorse qualsiasi (+2 PF). Ogni turno −1 PF a chi è nella sua stanza o adiacente.',
+    offesissimo: 'Scatta se non gli dai nulla o se raccogli nella sua stanza. Non accetta niente. Al turno dopo si sposta di 1 e dà −2 PF a chi è nella stanza d\'arrivo; poi si calma e la ruota riprende.',
+    arrabbiatissimo: 'Scatta quando il counter di risorse sbagliate arriva a 3. Resta fermo finché non gli dai 2 risorse qualsiasi (+2 PF, poi la ruota avanza). Ogni turno −1 PF a chi è nella sua stanza o adiacente.',
   };
 })(typeof window !== 'undefined' ? window : globalThis);
