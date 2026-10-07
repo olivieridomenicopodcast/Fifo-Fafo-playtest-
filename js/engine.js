@@ -380,6 +380,7 @@
       const s = this.s, p = s.players[pid];
       let b;
       if (s.special === 'offesissimo') {
+        if (!passive) p.waste += 1.5; // C1 inutile: Heafy non accetta niente
         b = this.say('heafy', `😡 Heafy Offesissimo non accetta nulla da ${this.pn(pid)}`, pid);
         if (b) yield b;
         return;

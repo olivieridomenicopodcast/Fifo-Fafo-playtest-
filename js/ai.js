@@ -9,6 +9,8 @@
   const FF = (root.FF = root.FF || {});
   const { CARDS, MOODS } = FF;
   const AI = (FF.AI = {});
+  const DEFAULTS = { opp: 'search', rngFix: true, j2w: 2.0 };
+  let CUR = DEFAULTS; // parametri dell'AI che sta decidendo in questo momento (decide() è sincrono)
 
   // ───────────────────────── valutazione ─────────────────────────
   const W = [1, 0.75, 0.5, 0.35];
@@ -39,7 +41,7 @@
     const left = Math.max(0, game.rules.turns - s.turn) / game.rules.turns;
     return (game.score(pid) - game.score(opp)) - (s.players[pid].waste - s.players[opp].waste)
       + handValue(game, s.players[pid].hand) - 0.4 * handValue(game, s.players[opp].hand)
-      + 0.8 * left * (s.players[pid].j2 - s.players[opp].j2);
+      + CUR.j2w * left * (s.players[pid].j2 - s.players[opp].j2);
   }
 
   // ───────────────────────── policy "greedy" ─────────────────────────
@@ -108,8 +110,9 @@
   function noop(c) { return c === 'B2' || c === 'C2' || c === 'J1'; }
 
   // Gioca (in un clone) il turno con i flow dati e ritorna la valutazione per `pid`.
-  function simulate(game, pid, flows, look) {
+  function simulate(game, pid, flows, look, rs) {
     const g = game.clone();
+    if (rs != null) g.s.rng = rs; // numeri casuali "finti": l'AI non deve conoscere i dadi futuri veri
     g.s.phase = 'resolve';
     for (const q of [g.s.first, 1 - g.s.first]) {
       if (flows[q]) FF.drive(g, g.resolveFlow(q, flows[q]), AI.greedy);
@@ -161,6 +164,15 @@
     return out;
   }
 
+  // Modello "razionale" dell'avversario: i suoi 3 flow migliori (cerca come farebbe l'AI media, Jolly compreso)
+  function opponentSearch(game, opp, rs) {
+    const scored = candidateFlows(game, opp).map((f) => {
+      const flows = [null, null]; flows[opp] = f;
+      return { f, v: simulate(game, opp, flows, true, rs) };
+    }).sort((a, b) => b.v - a.v);
+    return scored.slice(0, 3).map((x) => x.f);
+  }
+
   // ───────────────────────── ricerca del piano J2 (hard) ─────────────────────────
   function bestJ2Plan(game, d, rng) {
     const pid = d.player;
@@ -177,7 +189,7 @@
         g2.s.turn++; g2.s.players.forEach((p) => { p.interacted = false; }); g2.s.irreqDone = false;
         FF.drive(g2, g2.heafyPhase(), AI.greedy);
       }
-      const v = evalState(g2, pid) + rng() * 0.01;
+      const v = evalState(g2, pid) - 0.06 * seq.length + rng() * 0.001; // a parità, meno azioni (niente "prendi e deposita Heafy" a vuoto)
       if (v > bestScore) { bestScore = v; bestSeq = seq; }
     }
     (function dfs(g, done, last, seq, depth) {
@@ -194,7 +206,8 @@
   }
 
   // ───────────────────────── fabbrica ─────────────────────────
-  AI.create = function (level, seed) {
+  AI.create = function (level, seed, opts) {
+    const P = Object.assign({}, DEFAULTS, opts || {});
     const rng = FF.makeRng(seed == null ? Date.now() : seed);
     let plan = null;
 
@@ -210,23 +223,25 @@
         return f;
       }
       const hard = level === 'hard';
+      const rs = P.rngFix ? Math.floor(rng() * 2147483647) : null;
+      const rs2 = P.rngFix ? Math.floor(rng() * 2147483647) : null;
       const scored = cands.map((f) => {
         const flows = [null, null]; flows[pid] = f;
-        let v = simulate(game, pid, flows, hard);
+        let v = simulate(game, pid, flows, hard, rs);
         if (!hard) v += (rng() - 0.5) * 1.6;
         return { f, v };
       }).sort((a, b) => b.v - a.v);
       if (!hard) return scored[0].f;
       // hard: rifinisce i migliori contro i flow plausibili dell'avversario
-      const oppFlows = opponentFlows(game, 1 - pid);
+      const oppFlows = P.opp === 'search' ? opponentSearch(game, 1 - pid, rs) : opponentFlows(game, 1 - pid);
       let best = null, bv = -Infinity;
       for (const { f } of scored.slice(0, 14)) {
-        let tot = 0;
-        for (const of of oppFlows) {
+        let tot = 0, cnt = 0;
+        for (const of of oppFlows) for (const r of (P.rngFix ? [rs, rs2] : [null])) {
           const flows = [null, null]; flows[pid] = f; flows[1 - pid] = of;
-          tot += simulate(game, pid, flows, true);
+          tot += simulate(game, pid, flows, true, r); cnt++;
         }
-        tot = tot / oppFlows.length + rng() * 0.02;
+        tot = tot / cnt + rng() * 0.02;
         if (tot > bv) { bv = tot; best = f; }
       }
       return best;
@@ -235,6 +250,7 @@
     return {
       level,
       decide(game, d) {
+        CUR = P;
         switch (d.type) {
           case 'flow': plan = null; return chooseFlow(game, d);
           case 'j2step':
