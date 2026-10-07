@@ -477,10 +477,25 @@
           if (o.k === 'pickup') return ['🐱 Prendi Heafy', o.carry ? `gli fai portare ${RES[o.carry].i}` : 'senza risorsa'];
           return ['📍 Deposita Heafy', 'lascialo qui'];
         };
-        const btns = d.options.map((o, i) => { const [a, b] = label(o); return `<button class="opt" data-i="${i}" data-mv="${o.k === 'move' ? mod(p.pos + o.dir * o.steps) : ''}">${a}<small>${esc(b)}</small></button>`; }).join('');
-        this.setAction(`<h3>✨ Jolly J2 — scegli un'azione (cariche rimaste: ${p.j2})</h3>
-          <div class="small muted">Ogni opzione si usa una sola volta, nell'ordine che vuoi. Prendere Heafy non può essere l'ultima azione.</div>
-          <div class="opts">${btns}</div>
+        const h = g.s.heafy, done = d.done || {};
+        const btn = (o) => { const i = d.options.indexOf(o); const [a, b] = label(o); return `<button class="opt" data-i="${i}" data-mv="${o.k === 'move' ? mod(p.pos + o.dir * o.steps) : ''}">${a}<small>${esc(b)}</small></button>`; };
+        const off = (title, why) => `<button class="opt" disabled style="opacity:.55;cursor:not-allowed">${title}<small>${esc(why)}</small></button>`;
+        const of = (k) => d.options.filter((o) => o.k === k);
+        const sec = (title, items, hint) => `<div class="cgroup J"><div class="gt">${title}</div><div class="opts">${items}</div>${hint ? `<div class="small muted">${hint}</div>` : ''}</div>`;
+        const room = g.s.res[p.pos];
+        const moveS = sec('🏃 Spostamento (1 o 2 stanze, in un senso o nell\'altro)', done.move ? off('✔ già fatto', 'una sola volta per Jolly') : of('move').map(btn).join(''));
+        const colS = sec('🛡 Raccolta sicura (anche con Heafy nella stanza)', done.collect ? off('✔ già fatta', 'una sola volta per Jolly')
+          : of('collect').length ? of('collect').map(btn).join('') : off('Non disponibile', p.hand.length >= g.rules.handLimit ? 'hai la mano piena' : !room.length ? 'nessuna risorsa in questa stanza' : ''));
+        let pickWhy = '';
+        if (done.pickup) pickWhy = 'già fatto';
+        else if (h.carriedBy === p.id) pickWhy = 'Heafy è già in braccio a te';
+        else if (h.carriedBy != null) pickWhy = 'Heafy è in braccio all\'avversario';
+        else if (h.pos !== p.pos) pickWhy = `Heafy è in ${g.rname(h.pos)}: devi essere nella sua stanza. Usa prima lo spostamento per raggiungerlo!`;
+        const pickS = sec('🐱 Prendi Heafy (lo porti con te)', of('pickup').length ? of('pickup').map(btn).join('') : off('🐱 Prendi Heafy — non disponibile', pickWhy), 'Non può essere l\'ultima azione del Jolly: dopo averlo preso devi spostarti o depositarlo. Torna libero all\'inizio del turno dopo.');
+        const depS = sec('📍 Deposita Heafy', of('deposit').length ? of('deposit').map(btn).join('') : off('📍 Deposita Heafy — non disponibile', done.deposit ? 'già fatto' : 'non hai Heafy in braccio'));
+        this.setAction(`<h3>✨ Jolly J2 — scegli un'azione (cariche rimaste dopo questa: ${p.j2})</h3>
+          <div class="small muted" style="margin-bottom:6px">📍 Sei in ${esc(g.rname(p.pos))} · 🐱 Heafy è in ${esc(g.rname(h.pos))}${h.carriedBy === p.id ? ' (in braccio a te)' : ''}. Ogni azione si usa una sola volta, nell'ordine che vuoi; quando hai finito premi “Ho finito”.</div>
+          ${pickS}${moveS}${colS}${depS}
           <div class="btn-row"><button class="btn primary" id="j-done" ${d.canFinish ? '' : 'disabled'}>✔ Ho finito</button></div>`);
         $$('#g-action [data-i]').forEach((b) => {
           b.onclick = () => { this.targets = null; resolve(d.options[Number(b.dataset.i)]); };
