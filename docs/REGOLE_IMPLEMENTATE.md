@@ -15,7 +15,7 @@ Turno: **1)** fase Heafy (mood + movimento + interazioni passive) → **2)** sce
 | # | Punto ambiguo | Scelta |
 |---|---|---|
 | 1 | Movimento di Heafy | Un solo movimento per turno, dopo il cambio mood; il turno 1 rivela il primo mood |
-| 2 | Offesissimo | Scattato durante le carte: al turno dopo si muove di 1 e dà −2 PF nella stanza d'arrivo; quello ancora dopo si calma. Scattato in fase Heafy: si calma al turno dopo |
+| 2 | Offesissimo | Non pretende niente e non accetta nulla. Comunque scatti (durante le carte o in un'interazione passiva): al turno dopo si muove di 1 e dà −2 PF nella stanza d'arrivo; quello ancora dopo si calma e la ruota riprende |
 | 3 | Raccolta vicino a Heafy | −1 PF + Offesissimo; se già Offesissimo/Arrabbiatissimo solo −1 PF; stanza vuota: nessun effetto |
 | 4 | Mood senza pretesa | "Pretesa" = vuole una risorsa *specifica*. Senza pretesa basta dargli qualcosa: +1 PF (mai di più, nessun counter; parametro `noDemandGive`), −1 PF se non dai nulla, nessun Offesissimo |
 | 5 | Irrequieto | La prima risorsa qualsiasi: +2 PF e si calma (Neutro); per il resto del turno non accetta altro. Non soddisfatto: inversione direzione a fine turno e −1 PF a chi è con lui |

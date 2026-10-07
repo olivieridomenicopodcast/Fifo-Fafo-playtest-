@@ -8,7 +8,7 @@
   const N = 9;
   const R = 39.5; // raggio dell'anello (% della plancia)
 
-  const demandTxt = (m) => (m.demand === 'any' ? 'qualsiasi' : m.demand === 'two' ? '2 qualsiasi' : m.demand ? FF.RES[m.demand].n : 'nessuna pretesa');
+  const demandTxt = (m) => (m.id === 'offesissimo' ? 'non accetta niente' : m.demand === 'any' ? 'qualsiasi' : m.demand === 'two' ? '2 qualsiasi' : m.demand ? FF.RES[m.demand].n : 'nessuna pretesa');
   UI.demandTxt = demandTxt;
 
   // piccole frecce orarie tra le stanze + anello
@@ -69,6 +69,7 @@
   const WCOL = ['#ffd9a8', '#cfe8c0', '#c9dcf2', '#f6c9d4', '#fff0a8', '#e1d0f0', '#d7ecdf', '#ffcfb0', '#c8e6ee', '#f3dcb0'];
   const demandSprite = (m) => (m.demand && m.demand !== 'any' && m.demand !== 'two' ? SP.res(m.demand) : '');
   const demandLine = (m) => {
+    if (m.id === 'offesissimo') return '<span><b>niente</b>: non accetta nulla</span>';
     if (m.id === 'bisognoso') return `${SP.res('paletta')}<span>solo <b>Paletta</b></span>`;
     if (m.demand === 'any') return '<span>una risorsa <b>qualsiasi</b></span>';
     if (m.demand === 'two') return '<span><b>2 risorse</b> qualsiasi</span>';

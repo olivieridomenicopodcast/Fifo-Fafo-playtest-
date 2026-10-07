@@ -301,3 +301,11 @@ test('C1 sprecata o senza Heafy pesa sulla valutazione dell\'AI (waste)', () => 
   run(g, g.resolveFlow(0, ['C1', 'B2', 'J1']), ['snack']);
   assert.ok(p.waste >= 1.5);
 });
+
+test('Offesissimo scattato in fase Heafy (interazione passiva): il turno dopo si sposta e colpisce comunque', () => {
+  const g = mk(); g.s.phase = 'heafy'; setMood(g, 'affamato'); g.s.heafy.pos = 0; g.s.players[0].pos = 0; g.s.players[1].pos = 1;
+  run(g, g.interact(0, true), [[]]);
+  assert.equal(g.s.special, 'offesissimo'); assert.equal(g.s.offStage, 'hit');
+  g.s.turn = 2; run(g, g.heafyPhase(), () => []);
+  assert.equal(g.s.heafy.pos, 1); assert.equal(g.s.players[1].pf, -2); assert.equal(g.s.offStage, 'calm');
+});

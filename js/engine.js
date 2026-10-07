@@ -471,7 +471,7 @@
       const s = this.s;
       if (s.special) return false;
       s.special = 'offesissimo';
-      s.offStage = s.phase === 'heafy' ? 'calm' : 'hit';
+      s.offStage = 'hit'; // sempre: al prossimo giro si sposta e dà −2 PF, quello dopo si calma
       this.stat('offesissimo_scattato', -1);
       this.stat('offesissimo_causato', pid);
       return true;

@@ -7,7 +7,7 @@
 
   UI.INTERPRETATIONS = [
     '<b>Un solo movimento di Heafy per turno</b>: prima cambia il mood (al turno 1 si rivela il primo), poi Heafy si muove secondo il nuovo mood (standard = 1 stanza nella direzione corrente).',
-    '<b>Offesissimo</b>: se scatta durante le carte, al turno dopo Heafy si sposta di 1 e dà −2 PF a chi è nella stanza d\'arrivo; al turno ancora dopo si calma e la ruota riprende. Se scatta nella fase Heafy (interazione passiva), si calma al turno dopo senza colpire.',
+    '<b>Offesissimo</b> (non pretende niente: non accetta nulla da nessuno): scatta quando non gli dai niente o quando raccogli nella sua stanza, durante le carte <i>o</i> in un\'interazione passiva. Al turno dopo Heafy si sposta di 1 e dà −2 PF a chi è nella stanza d\'arrivo; al turno ancora dopo si calma e la ruota riprende.',
     '<b>Raccogliere nella stanza di Heafy</b> senza Jolly: −1 PF e Offesissimo. Se Heafy è già Offesissimo o Arrabbiatissimo costa solo −1 PF (non lo sostituisce). In una stanza senza risorse non succede nulla.',
     '<b>Pretesa</b> = Heafy vuole una risorsa specifica. I mood <b>senza pretesa</b> (Neutro, Curioso, Iperattivo, Dispettoso) vogliono solo che gli dai <i>qualcosa</i>: una risorsa qualsiasi vale +1 PF (mai di più, nessun counter); niente = −1 PF, senza Offesissimo.',
     '<b>Irrequieto</b>: la prima risorsa qualsiasi = +2 PF e Heafy si calma (Neutro); per il resto del turno non accetta altro. Se nessuno lo soddisfa, a fine turno inverte la direzione e −1 PF a chi è con lui.',
