@@ -8,13 +8,13 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header class="topbar">
-  <button class="logo" id="btn-home" title="Menu principale">🐱 FIFO FAFO<small>playtest</small></button>
-  <span class="sp"></span>
+  <button class="logo" id="btn-home" title="Menu principale"><span id="logo-cat"></span>FIFO FAFO<small>playtest</small></button>
+  <span class="spacer"></span>
   <span class="tb-info" id="tb-info"></span>
   <button class="btn sm" id="btn-rules">📖 Regole</button>
 </header>
@@ -23,16 +23,16 @@
   <section class="screen active" id="s-home">
     <div class="wrap">
       <div class="hero">
-        <span class="cat">🐱</span>
+        <div class="stage" id="hero-stage"></div>
         <h1>FIFO FAFO</h1>
         <p>Il gioco del gatto e del letto — banco di prova digitale</p>
       </div>
       <div id="resume-box"></div>
       <div class="modes">
-        <button class="mode" data-mode="ai"><span class="ico">🤖</span><b>Contro l'AI</b><span class="d">Sfida Heafy e un avversario artificiale: facile, media o difficile.</span></button>
-        <button class="mode" data-mode="hotseat"><span class="ico">👥</span><b>Due giocatori</b><span class="d">Stesso telefono o pc: schermata di passaggio per tenere segreto il Flow.</span></button>
-        <button class="mode" data-mode="watch"><span class="ico">🍿</span><b>AI contro AI</b><span class="d">Guarda una partita passo dopo passo, a velocità regolabile.</span></button>
-        <button class="mode" data-mode="sim"><span class="ico">📊</span><b>Simulazione veloce</b><span class="d">Centinaia di partite AI in pochi secondi: risultati, statistiche e confronto di varianti di regole.</span></button>
+        <button class="mode" data-mode="ai"><span class="ico"><span data-cat="neutro"></span></span><span class="txt"><b>Contro l'AI</b><span class="d">Sfida Heafy e un avversario artificiale: facile, media o difficile.</span></span></button>
+        <button class="mode" data-mode="hotseat"><span class="ico"><span data-cat="coccolone"></span></span><span class="txt"><b>Due giocatori</b><span class="d">Stesso telefono o pc: schermata di passaggio per tenere segreto il Flow.</span></span></button>
+        <button class="mode" data-mode="watch"><span class="ico"><span data-cat="curioso"></span></span><span class="txt"><b>AI contro AI</b><span class="d">Guarda una partita passo dopo passo, a velocità regolabile.</span></span></button>
+        <button class="mode" data-mode="sim"><span class="ico"><span data-cat="iperattivo"></span></span><span class="txt"><b>Simulazione veloce</b><span class="d">Centinaia di partite AI in pochi secondi: risultati, statistiche e confronto di varianti di regole.</span></span></button>
       </div>
       <div class="card">
         <h2>Per il playtest</h2>
@@ -53,6 +53,7 @@
 <script src="js/engine.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/sim.js"></script>
+<script src="js/ui/sprites.js"></script>
 <script src="js/ui/common.js"></script>
 <script src="js/ui/board.js"></script>
 <script src="js/ui/play.js"></script>

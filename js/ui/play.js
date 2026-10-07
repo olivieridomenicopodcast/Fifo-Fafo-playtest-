@@ -169,7 +169,7 @@
       el.innerHTML = `<div class="gbar"><span class="turn" id="g-turn"></span><span class="chip" id="g-per"></span><span class="chip" id="g-first"></span><span style="flex:1"></span>
         <div class="ctrl" id="g-ctrl"></div></div>
         <div class="glayout"><div>
-          <div class="panel"><div class="board" id="g-board"></div></div>
+          <div class="tablefelt"><div class="board" id="g-board"></div></div>
           <div class="panel action" id="g-action"></div>
         </div><div>
           <div class="panel"><div class="ptitle">Giocatori</div><div id="g-players"></div></div>
@@ -302,7 +302,7 @@
     cover(pid, why) {
       const p = this.cfg.players[pid];
       return new Promise((resolve) => {
-        const dlg = UI.modal(`<div class="big">${FF.PLAYER_ICONS[pid]}</div><h2>Tocca a ${esc(p.name)}</h2><p class="muted" style="margin-bottom:6px">${esc(why)}</p>
+        const dlg = UI.modal(`<div class="bigcat" style="width:90px;height:110px">${FF.Sprites.pawn(pid)}</div><h2>Tocca a ${esc(p.name)}</h2><p class="muted" style="margin-bottom:6px">${esc(why)}</p>
           <p class="small muted" style="margin-bottom:14px">Passa il dispositivo: l'altro giocatore non deve guardare lo schermo.</p>
           <button class="btn primary block" data-x>Sono ${esc(p.name)} — mostra</button>`, { solid: true, dismiss: false });
         dlg.el.querySelector('[data-x]').onclick = () => { dlg.close(); resolve(); };
@@ -321,22 +321,20 @@
       ];
       const sub = (code) => {
         const c = CARDS[code];
-        if (c.t === 'A') { const pos = mod(p.pos + c.dir * c.steps); return `${c.dir > 0 ? '↻' : '↺'}${c.steps} · ${g.room(pos).icon} ${g.room(pos).name}`; }
+        if (c.t === 'A') return `verso ${g.room(mod(p.pos + c.dir * c.steps)).name}`;
         return c.label;
       };
       return new Promise((resolve) => {
         const render = () => {
           const ord = order.map((t) => chosen[t]);
           const prev = previewFlow(g, pid, ord);
-          const groups = types.map(([t, title, codes]) => `<div class="cgroup ${t}"><div class="gt">${t} · ${title}</div><div class="opts">${codes.map((c) => {
-            const dis = c === 'J2' && p.j2 <= 0;
-            return `<button class="opt ${chosen[t] === c ? 'sel' : ''}" data-c="${c}" ${dis ? 'disabled style="opacity:.35"' : ''}>${c}<small>${esc(sub(c))}</small></button>`;
-          }).join('')}</div></div>`).join('');
-          const row = order.length ? order.map((t, i) => `<div style="display:flex;align-items:center"><div class="fcard ${t}">${chosen[t]}<small>${i + 1}°</small></div>
-            <div class="mv"><button data-mv="${i}" data-dir="-1" ${i === 0 ? 'disabled' : ''}>◀</button><button data-mv="${i}" data-dir="1" ${i === order.length - 1 ? 'disabled' : ''}>▶</button></div></div>${i < order.length - 1 ? '<span class="farrow">→</span>' : ''}`).join('')
-            : '<span class="muted small">Scegli una carta per tipo: l\'ordine di scelta è l\'ordine del Flow (puoi riordinarlo).</span>';
+          const pcard = (c, extra) => `<button class="pcard ${CARDS[c].t} ${chosen[CARDS[c].t] === c && !extra ? 'sel' : ''}" ${extra ? '' : `data-c="${c}"`} ${c === 'J2' && p.j2 <= 0 && !extra ? 'disabled' : ''}>${extra || ''}${FF.Sprites.card(c, 'ci')}<b>${c}</b><small>${esc(sub(c))}</small></button>`;
+          const groups = types.map(([t, title, codes]) => `<div class="cgroup ${t}"><div class="gt">${title}</div><div class="cards">${codes.map((c) => pcard(c)).join('')}</div></div>`).join('');
+          const row = order.length ? order.map((t, i) => `<div class="slotwrap">${pcard(chosen[t], `<span class="num">${i + 1}</span>`)}
+            <div class="mvrow"><button data-mv="${i}" data-dir="-1" ${i === 0 ? 'disabled' : ''}>◀</button><button data-mv="${i}" data-dir="1" ${i === order.length - 1 ? 'disabled' : ''}>▶</button></div></div>${i < order.length - 1 ? '<span class="farrow">➜</span>' : ''}`).join('')
+            : '<span class="flowhint">Scegli una carta per tipo: l\'ordine in cui le scegli è l\'ordine del Flow (poi puoi spostarle con le frecce).</span>';
           const full = order.length === 4;
-          this.setAction(`<h3>${FF.PLAYER_ICONS[pid]} ${esc(p.name)}: costruisci il tuo Flow</h3>
+          this.setAction(`<h3>${FF.Sprites.pawn(pid, 'inl')} ${esc(p.name)}: costruisci il tuo Flow</h3>
             <div class="small muted" style="margin-bottom:6px">📍 Sei in ${esc(g.rname(p.pos))} · 🐱 Heafy in ${esc(g.rname(g.s.heafy.pos))} · mano: ${p.hand.map((r) => RES[r].i).join(' ') || 'vuota'}</div>
             ${groups}<div class="lbl" style="margin-top:6px">Il tuo Flow (ordine di esecuzione)</div><div class="flowrow">${row}</div>
             ${prev.length ? `<div class="pv">${prev.map(([c, t, cls]) => `<div class="${cls}"><b>${c}</b> ${esc(t)}</div>`).join('')}<div class="muted">Stima: non considera cosa farà l'avversario.</div></div>` : ''}
@@ -381,7 +379,7 @@
           const out = giveOutcome(g, d, picked);
           const btns = d.hand.map((r, i) => {
             const o = giveOutcome(g, d, arrab ? [r, r] : [r]);
-            return `<button class="opt ${sel.includes(i) ? 'sel' : ''} ${o[1]}" data-i="${i}">${RES[r].i} ${RES[r].n}<small>${arrab ? 'sceglila' : esc(o[0])}</small></button>`;
+            return `<button class="opt ${sel.includes(i) ? 'sel' : ''} ${o[1]}" data-i="${i}">${FF.Sprites.res(r, 'res')}${RES[r].n}<small>${arrab ? 'sceglila' : esc(o[0])}</small></button>`;
           }).join('') || '<span class="muted small">Non hai risorse.</span>';
           const none = giveOutcome(g, d, []);
           this.setAction(`<h3>${m.e} ${d.passive ? 'Heafy è con te' : 'Interagisci con Heafy'} — ${m.name}</h3>
@@ -404,7 +402,7 @@
 
     b1Panel(d) {
       return new Promise((resolve) => {
-        const btns = d.options.map((r) => `<button class="opt ${d.near ? 'bad' : ''}" data-r="${r}">${RES[r].i} ${RES[r].n}<small>${d.near ? '−1 PF e Offesissimo' : 'raccogli'}</small></button>`).join('');
+        const btns = d.options.map((r) => `<button class="opt ${d.near ? 'bad' : ''}" data-r="${r}">${FF.Sprites.res(r, 'res')}${RES[r].n}<small>${d.near ? '−1 PF e Offesissimo' : 'raccogli'}</small></button>`).join('');
         this.setAction(`<h3>B1 — Raccolta in ${esc(this.game.rname(this.game.s.players[d.player].pos))}</h3>
           ${d.near ? '<div class="small note-bad">⚠ Heafy è in questa stanza: raccogliere (senza Jolly) fa arrabbiare Heafy.</div>' : '<div class="small muted">Più risorse presenti: scegli quale prendere.</div>'}
           <div class="opts">${btns}</div>${d.skip ? '<div class="btn-row"><button class="btn" id="b-skip">Non raccogliere</button></div>' : ''}`);
@@ -415,7 +413,7 @@
 
     abandonPanel(d) {
       return new Promise((resolve) => {
-        const btns = d.hand.map((r) => `<button class="opt bad" data-r="${r}">${RES[r].i} ${RES[r].n}<small>abbandona</small></button>`).join('');
+        const btns = d.hand.map((r) => `<button class="opt bad" data-r="${r}">${FF.Sprites.res(r, 'res')}${RES[r].n}<small>abbandona</small></button>`).join('');
         this.setAction(`<h3>C1 — Heafy non è qui</h3><div class="small note-bad">Devi abbandonare una risorsa nella stanza. Quale?</div><div class="opts">${btns}</div>`);
         $$('#g-action [data-r]').forEach((b) => b.onclick = () => resolve(b.dataset.r));
       });
@@ -483,7 +481,7 @@
         const rows = Object.keys(st).filter((k) => k.startsWith('pf+') || k.startsWith('pf-')).sort().map((k) => `<tr><td>${esc(FF.Sim.STAT_LABELS[k] || k)}</td><td>${k.startsWith('pf+') ? '+' : '−'}${st[k]}</td></tr>`).join('');
         return `<div><div class="lbl">${FF.PLAYER_ICONS[i]} ${nm(i)}</div><table class="t">${rows || '<tr><td class="muted">nessun punto</td><td></td></tr>'}</table></div>`;
       }).join('');
-      const dlg = UI.modal(`<div class="big">🐱</div><h2>${title}</h2>
+      const dlg = UI.modal(`<div class="bigcat">${FF.Sprites.cat(r.winner == null ? 'neutro' : 'coccolone')}</div><h2>${title}</h2>
         <p class="muted">${r.winner == null ? 'Heafy dorme in mezzo al letto.' : 'Heafy dorme dalla parte di ' + nm(r.winner) + '!'}</p>
         <div class="scoreline">${[0, 1].map((i) => `<div><div class="sc ${r.winner === i ? 'win' : ''}">${r.scores[i]}</div><div class="small muted">${nm(i)}<br>${r.pf[i]} PF − ${r.rancor[i]} rancori</div></div>`).join('')}</div>
         <details style="text-align:left;margin-bottom:12px"><summary class="small" style="cursor:pointer;color:var(--accent)">Da dove sono arrivati i punti</summary><div class="row2" style="margin-top:8px">${breakdown}</div></details>

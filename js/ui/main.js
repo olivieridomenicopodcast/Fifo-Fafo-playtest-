@@ -27,6 +27,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    document.body.insertAdjacentHTML('afterbegin', FF.Sprites.sheet());
+    $('#logo-cat').innerHTML = FF.Sprites.cat('neutro');
+    document.querySelectorAll('[data-cat]').forEach((e) => { e.outerHTML = FF.Sprites.cat(e.dataset.cat); });
+    $('#hero-stage').innerHTML = `<div class="bg">${FF.Sprites.room('camera')}</div><div class="cat">${FF.Sprites.cat('assonnato')}</div>`;
     $('#btn-home').onclick = () => UI.go('home');
     $('#btn-rules').onclick = () => UI.go('rules');
     document.querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => UI.go(b.dataset.mode)));

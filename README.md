@@ -13,6 +13,10 @@ Nessuna build: apri `index.html` (o `npm run serve` → http://localhost:8080). 
 
 Ogni partita ha un **seed**: stesso seed = stessa partita. Dal log si possono aggiungere note di playtest (📝).
 
+## Grafica e sprite
+Plancia 2D illustrata (le 9 stanze sono disegnate e si dispongono ad anello a caso), Heafy con un'espressione diversa per ogni mood, pedine, gettoni risorsa e carte da gioco: tutti sprite SVG disegnati nel codice (`js/ui/sprites.js`).
+`node tools/export-sprites.js` li esporta come file in `assets/sprites/*.svg` (riutilizzabili, ad es. in Godot) e genera la galleria `sprites.html`.
+
 ## Da riga di comando
 ```
 npm test                                   # 25 test sulle regole
