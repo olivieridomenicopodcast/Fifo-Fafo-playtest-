@@ -1,0 +1,15 @@
+{
+  "name": "FIFO FAFO — Playtest",
+  "short_name": "FIFO FAFO",
+  "description": "Il gioco del gatto e del letto — versione digitale per playtest: AI, due giocatori, simulazioni",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1c1209",
+  "theme_color": "#2b1e0e",
+  "orientation": "any",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2b1e0e">
+<title>FIFO FAFO — Playtest</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="logo" id="btn-home" title="Menu principale">🐱 FIFO FAFO<small>playtest</small></button>
+  <span class="sp"></span>
+  <span class="tb-info" id="tb-info"></span>
+  <button class="btn sm" id="btn-rules">📖 Regole</button>
+</header>
+
+<main id="app">
+  <section class="screen active" id="s-home">
+    <div class="wrap">
+      <div class="hero">
+        <span class="cat">🐱</span>
+        <h1>FIFO FAFO</h1>
+        <p>Il gioco del gatto e del letto — banco di prova digitale</p>
+      </div>
+      <div id="resume-box"></div>
+      <div class="modes">
+        <button class="mode" data-mode="ai"><span class="ico">🤖</span><b>Contro l'AI</b><span class="d">Sfida Heafy e un avversario artificiale: facile, media o difficile.</span></button>
+        <button class="mode" data-mode="hotseat"><span class="ico">👥</span><b>Due giocatori</b><span class="d">Stesso telefono o pc: schermata di passaggio per tenere segreto il Flow.</span></button>
+        <button class="mode" data-mode="watch"><span class="ico">🍿</span><b>AI contro AI</b><span class="d">Guarda una partita passo dopo passo, a velocità regolabile.</span></button>
+        <button class="mode" data-mode="sim"><span class="ico">📊</span><b>Simulazione veloce</b><span class="d">Centinaia di partite AI in pochi secondi: risultati, statistiche e confronto di varianti di regole.</span></button>
+      </div>
+      <div class="card">
+        <h2>Per il playtest</h2>
+        <p class="small muted">Ogni partita ha un <b>seed</b>: ripetendolo (o usando "Rivedi" dai risultati della simulazione) ottieni esattamente la stessa partita. Il motore di gioco è separato dall'interfaccia, quindi l'AI e le simulazioni giocano con le stesse identiche regole degli umani. Le interpretazioni delle regole ambigue sono elencate in <b>📖 Regole</b>.</p>
+      </div>
+    </div>
+  </section>
+  <section class="screen" id="s-setup"></section>
+  <section class="screen" id="s-game"></section>
+  <section class="screen" id="s-sim"></section>
+  <section class="screen" id="s-rules"></section>
+</main>
+
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/ui/common.js"></script>
+<script src="js/ui/board.js"></script>
+<script src="js/ui/play.js"></script>
+<script src="js/ui/simui.js"></script>
+<script src="js/ui/rules.js"></script>
+<script src="js/ui/main.js"></script>
+</body>
+</html>
