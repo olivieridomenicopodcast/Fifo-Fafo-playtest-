@@ -319,3 +319,22 @@ svg.sp.inl { display: inline-block; width: 26px; height: 36px; vertical-align: m
 .mcard .mcat { width: 56px; height: 56px; }
 .mcard .mdem svg { width: 26px; height: 26px; }
 .lg .lgi { width: 112px; } .lg .lgi svg { width: 30px; height: 30px; }
+
+/* ── layout partita: legenda a sinistra su schermi larghi ── */
+.glayout { grid-template-columns: minmax(0, 1fr) 360px; }
+.glayout .maincol { grid-column: 1; grid-row: 1 / span 2; min-width: 0; }
+.glayout .sidecol { grid-column: 2; grid-row: 1; min-width: 0; }
+.glayout .legendcol { grid-column: 2; grid-row: 2; min-width: 0; }
+@media (min-width: 1300px) {
+  .glayout { grid-template-columns: 290px minmax(0, 1fr) 360px; max-width: 1600px; }
+  .glayout .legendcol { grid-column: 1; grid-row: 1; position: sticky; top: 74px; max-height: calc(100vh - 90px); overflow-y: auto; scrollbar-width: thin; }
+  .glayout .maincol { grid-column: 2; grid-row: 1; }
+  .glayout .sidecol { grid-column: 3; grid-row: 1; }
+  .legendcol .lg { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .legendcol .lg .lgi { width: auto; justify-content: flex-start; }
+}
+@media (max-width: 900px) {
+  .glayout { grid-template-columns: 1fr; }
+  .glayout .maincol, .glayout .sidecol, .glayout .legendcol { grid-column: 1; grid-row: auto; }
+  .glayout .maincol { order: 1; } .glayout .sidecol { order: 2; } .glayout .legendcol { order: 3; }
+}

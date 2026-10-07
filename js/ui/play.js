@@ -169,15 +169,14 @@
       const el = $('#s-game');
       el.innerHTML = `<div class="gbar"><span class="turn" id="g-turn"></span><span class="chip" id="g-per"></span><span class="chip" id="g-first"></span><span style="flex:1"></span>
         <div class="ctrl" id="g-ctrl"></div></div>
-        <div class="glayout"><div>
+        <div class="glayout"><aside class="legendcol"><div class="panel"><details open><summary class="ptitle" style="cursor:pointer">Legenda</summary><div class="legend">${UI.legendHTML()}</div></details></div></aside><div class="maincol">
           <div class="announce" id="g-announce"></div>
           <div class="tablefelt"><div class="board" id="g-board"></div></div>
           <div class="panel action" id="g-action"></div>
-        </div><div>
+        </div><div class="sidecol">
           <div class="panel"><div class="ptitle">Giocatori</div><div id="g-players"></div></div>
           <div class="panel"><div class="ptitle">Heafy e la ruota dei mood</div><div id="g-wheel"></div></div>
           <div class="panel"><div class="ptitle">Cronaca</div><div class="logbox" id="g-log"></div></div>
-          <div class="panel"><details open><summary class="ptitle" style="cursor:pointer">Legenda</summary><div class="legend">${UI.legendHTML()}</div></details></div>
         </div></div>`;
       const c = $('#g-ctrl');
       c.innerHTML = `<select id="g-speed" title="Velocità">${Object.entries(SPEEDS).map(([k, v]) => `<option value="${k}" ${k === this.speed ? 'selected' : ''}>${v}</option>`).join('')}</select>
