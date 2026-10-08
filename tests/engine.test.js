@@ -309,3 +309,40 @@ test('Offesissimo scattato in fase Heafy (interazione passiva): il turno dopo si
   g.s.turn = 2; run(g, g.heafyPhase(), () => []);
   assert.equal(g.s.heafy.pos, 1); assert.equal(g.s.players[1].pf, -2); assert.equal(g.s.offStage, 'calm');
 });
+
+test('obiettivi: pesca (2+2), scelta, controlli sul tavolo, rivelazione e Rancore se falliti', () => {
+  const g = new FF.Game({ seed: 'obj1', log: true });
+  const offers = [];
+  const a = [FF.AI.create('medium', 1), FF.AI.create('medium', 2)];
+  const r = FF.drive(g, g.run(), (game, d) => { if (d.type === 'objectives') offers.push(d.offer); return a[d.player].decide(game, d); });
+  assert.equal(offers.length, 2);
+  offers.forEach((o) => { assert.equal(o.length, 4); assert.equal(o.filter((id) => FF.OBJECTIVES[id].deck === 'A').length, 2); });
+  assert.equal(new Set(offers.flat()).size, 8, 'nessuna carta in comune');
+  assert.equal(g.s.objectives[0].length, 2);
+  let gain = 0, fails = 0;
+  [0, 1].forEach((i) => r.objs[i].forEach((o) => { if (o.ok) gain += o.pts; else fails++; }));
+  assert.equal(r.objPts[0] + r.objPts[1], gain);
+  assert.equal(r.rancor[0] + r.rancor[1], g.s.players[0].rancor + g.s.players[1].rancor);
+  assert.ok(g.events.some((e) => e.k === 'obj'));
+});
+
+test('controllo di ogni obiettivo', () => {
+  const g = mk(); const p = g.s.players[0];
+  p.pos = g.posOf('cucina'); assert.equal(g.objectiveDone(0, 'angolo:cucina'), true); assert.equal(g.objectiveDone(0, 'angolo:bagno'), false);
+  g.s.heafy.pos = p.pos; assert.equal(g.objectiveDone(0, 'compagno'), true);
+  p.hand = ['snack']; assert.equal(g.objectiveDone(0, 'tasche'), false);
+  p.hand = ['snack', 'snack']; assert.equal(g.objectiveDone(0, 'tasche'), true); assert.equal(g.objectiveDone(0, 'coppia'), true);
+  p.hand = ['snack', 'giochino']; assert.equal(g.objectiveDone(0, 'coppia'), false); assert.equal(g.objectiveDone(0, 'set:snack+giochino'), true); assert.equal(g.objectiveDone(0, 'set:giochino+cuscino'), false);
+  assert.equal(g.objectiveDone(0, 'risparmiatore'), true); p.j2 = 1; assert.equal(g.objectiveDone(0, 'risparmiatore'), false);
+});
+
+test('ultimo turno: chi parte per primo (in svantaggio) prende il bonus, una volta sola', () => {
+  const g = new FF.Game({ seed: 'bonus', log: true });
+  const a = [FF.AI.create('easy', 1), FF.AI.create('easy', 2)];
+  FF.drive(g, g.run(), (game, d) => a[d.player].decide(game, d));
+  const ev = g.events.filter((e) => e.text.includes('Ultimo turno'));
+  assert.equal(ev.length, 1); assert.equal(ev[0].t, 15);
+  const g2 = new FF.Game({ seed: 'bonus', log: true, rules: { lastTurnFirstBonus: 0 } });
+  FF.drive(g2, g2.run(), (game, d) => a[d.player].decide(game, d));
+  assert.equal(g2.events.filter((e) => e.text.includes('Ultimo turno')).length, 0);
+});

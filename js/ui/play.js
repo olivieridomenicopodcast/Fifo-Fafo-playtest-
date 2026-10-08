@@ -175,6 +175,7 @@
           <div class="panel action" id="g-action"></div>
         </div><div class="sidecol">
           <div class="panel"><div class="ptitle">Giocatori</div><div id="g-players"></div></div>
+          <div class="panel"><div class="ptitle">🎯 Obiettivi segreti</div><div id="g-objs"></div></div>
           <div class="panel"><div class="ptitle">Heafy e la ruota dei mood</div><div id="g-wheel"></div></div>
           <div class="panel"><div class="ptitle">Cronaca</div><div class="logbox" id="g-log"></div></div>
         </div></div>`;
@@ -219,6 +220,23 @@
       UI.renderBoard($('#g-board'), g, { targets: this.targets });
       UI.renderPlayers($('#g-players'), g, { active: active == null ? (s.phase === 'resolve' ? this.currentActor : null) : active });
       UI.renderWheel($('#g-wheel'), g);
+      this.renderObjs();
+    }
+    // pannello obiettivi segreti: tuoi (vs AI), a richiesta (hotseat), di entrambi (spettatore)
+    renderObjs() {
+      const box = $('#g-objs'); if (!box) return;
+      const g = this.game, s = g.s;
+      if (!g.rules.objectives || !s.objectives[0].length) { box.innerHTML = '<div class="muted small">Nessun obiettivo in questa partita.</div>'; return; }
+      const card = (pid) => s.objectives[pid].map((id) => UI.objCard(id, g.objectiveDone(pid, id) ? 'ok' : 'ko')).join('');
+      if (this.mode === 'ai') {
+        const me = this.humanSeats[0];
+        box.innerHTML = `<div class="small muted" style="margin-bottom:6px">Solo tu li vedi. Si rivelano a fine partita: ✔ = punti, ✘ = +1 Rancore. Lo stato è quello di adesso: conta quello dell'ultimo turno.</div>${card(me)}`;
+      } else if (this.mode === 'watch') {
+        box.innerHTML = [0, 1].map((p) => `<div class="lbl">${FF.PLAYER_ICONS[p]} ${esc(s.players[p].name)}</div>${card(p)}`).join('');
+      } else {
+        box.innerHTML = `<div class="small muted" style="margin-bottom:6px">Passa il dispositivo prima di guardare: gli obiettivi sono segreti.</div><div class="btn-row">${[0, 1].map((p) => `<button class="btn sm" data-o="${p}">👁 ${esc(s.players[p].name)}</button>`).join('')}</div>`;
+        box.querySelectorAll('[data-o]').forEach((b) => (b.onclick = () => { const p = Number(b.dataset.o); const dlg = UI.modal(`<h2>🎯 Obiettivi di ${esc(s.players[p].name)}</h2>${card(p)}<div class="btn-row end" style="margin-top:12px"><button class="btn primary" data-x>Nascondi</button></div>`, { left: true }); dlg.el.querySelector('[data-x]').onclick = dlg.close; }));
+      }
     }
     setAction(html) { const a = $('#g-action'); if (a) a.innerHTML = html; return a; }
 
@@ -249,7 +267,7 @@
       const n = this.game.s.players[d.player].name;
       return {
         flow: `Tocca a ${n}: scegli il tuo Flow`, give: d.passive ? `Heafy è con ${n}: deve dargli qualcosa` : `${n} interagisce con Heafy: cosa gli dai?`,
-        b1: `${n}: cosa raccogli?`, abandon: `${n}: devi abbandonare una risorsa`, j2step: `${n}: usa il Jolly ✨`,
+        objectives: `${n}: scegli i tuoi obiettivi segreti`, b1: `${n}: cosa raccogli?`, abandon: `${n}: devi abbandonare una risorsa`, j2step: `${n}: usa il Jolly ✨`,
       }[d.type] || `Tocca a ${n}`;
     }
     async pace(ev) {
@@ -332,6 +350,12 @@
         if (hot) this.setAction('<h3>Flow scelto ✔</h3>');
         return flow;
       }
+      if (d.type === 'objectives') {
+        if (hot) await this.cover(d.player, 'Scegli i tuoi obiettivi segreti');
+        const picks = await this.objectivesPanel(d);
+        if (hot) this.setAction('<h3>Obiettivi scelti ✔</h3>');
+        return picks;
+      }
       if (d.type === 'give') return this.givePanel(d);
       if (d.type === 'b1') return this.b1Panel(d);
       if (d.type === 'abandon') return this.abandonPanel(d);
@@ -410,6 +434,27 @@
             dlg.el.querySelector('[data-no]').onclick = dlg.close;
             dlg.el.querySelector('[data-yes]').onclick = () => { dlg.close(); resolve(order.map((t) => chosen[t])); };
           };
+        };
+        render();
+      });
+    }
+
+    objectivesPanel(d) {
+      return new Promise((resolve) => {
+        let sel = [];
+        const render = () => {
+          const group = (title, ids) => `<div class="cgroup J"><div class="gt">${title}</div><div class="ogrid">${ids.map((id) => `<button class="opick ${sel.includes(id) ? 'sel' : ''}" data-id="${esc(id)}">${UI.objCard(id)}</button>`).join('')}</div></div>`;
+          this.setAction(`<h3>🎯 Scegli ${d.keep} obiettivi segreti da tenere (su 4)</h3>
+            <div class="small muted" style="margin-bottom:8px">Si controllano a fine partita guardando il tavolo. Se lo completi prendi i punti; se no, +1 Rancore (−1 PF). Quelli che scarti restano segreti.</div>
+            ${group('Posizione', d.offer.filter((id) => FF.OBJECTIVES[id].deck === 'A'))}${group('Mano e stile', d.offer.filter((id) => FF.OBJECTIVES[id].deck === 'B'))}
+            <div class="btn-row"><button class="btn primary" id="o-ok" style="flex:1" ${sel.length === d.keep ? '' : 'disabled'}>Tengo questi ${d.keep} (${sel.length}/${d.keep})</button></div>`);
+          $$('#g-action [data-id]').forEach((b) => (b.onclick = () => {
+            const id = b.dataset.id;
+            if (sel.includes(id)) sel = sel.filter((x) => x !== id);
+            else { if (sel.length >= d.keep) sel.shift(); sel.push(id); }
+            render();
+          }));
+          $('#o-ok').onclick = () => { if (sel.length === d.keep) resolve(sel.slice()); };
         };
         render();
       });
@@ -547,10 +592,11 @@
       }).join('');
       const dlg = UI.modal(`<div class="bigcat">${FF.Sprites.cat(r.winner == null ? 'neutro' : 'coccolone')}</div><h2>${title}</h2>
         <p class="muted">${r.winner == null ? 'Heafy dorme in mezzo al letto.' : 'Heafy dorme dalla parte di ' + nm(r.winner) + '!'}</p>
-        <div class="scoreline">${[0, 1].map((i) => `<div><div class="sc ${r.winner === i ? 'win' : ''}">${r.scores[i]}</div><div class="small muted">${nm(i)}<br>${r.pf[i]} PF − ${r.rancor[i]} rancori</div></div>`).join('')}</div>
+        <div class="scoreline">${[0, 1].map((i) => `<div><div class="sc ${r.winner === i ? 'win' : ''}">${r.scores[i]}</div><div class="small muted">${nm(i)}<br>${r.pf[i]} PF − ${r.rancor[i]} rancori${r.objPts && r.objPts[i] ? ' + ' + r.objPts[i] + ' obiettivi' : ''}</div></div>`).join('')}</div>
+        ${r.objs && r.objs.some((l) => l.length) ? `<div class="lbl" style="text-align:left">🎯 Obiettivi segreti rivelati</div><div class="row2" style="text-align:left;margin-bottom:12px">${[0, 1].map((i) => `<div><div class="lbl">${FF.PLAYER_ICONS[i]} ${nm(i)} · ${r.objPts[i] ? '+' + r.objPts[i] : '0'} PF</div>${r.objs[i].map((o) => UI.objCard(o.id, o.ok ? 'ok' : 'ko', true)).join('')}</div>`).join('')}</div>` : ''}
         <details style="text-align:left;margin-bottom:12px"><summary class="small" style="cursor:pointer;color:var(--accent)">Da dove sono arrivati i punti</summary><div class="row2" style="margin-top:8px">${breakdown}</div></details>
         <div style="display:grid;gap:8px"><button class="btn primary" data-a="again">↺ Nuova partita</button>
-        <button class="btn" data-a="log">📄 Esporta log</button><button class="btn" data-a="seed">🌱 Copia seed (${esc(c.seed)})</button><button class="btn" data-a="home">🏠 Menu principale</button></div>`, { left: false, dismiss: false });
+        <button class="btn" data-a="log">📄 Esporta log</button><button class="btn" data-a="seed">🌱 Copia seed (${esc(c.seed)})</button><button class="btn" data-a="home">🏠 Menu principale</button></div>`, { left: false, dismiss: false, wide: true });
       dlg.el.addEventListener('click', (e) => {
         const a = e.target.dataset.a; if (!a) return;
         if (a === 'log') UI.download(`fifo-fafo-${c.seed}.txt`, this.logText());

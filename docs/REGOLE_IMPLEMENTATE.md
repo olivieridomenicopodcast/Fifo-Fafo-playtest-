@@ -30,7 +30,21 @@ Turno: **1)** fase Heafy (mood + movimento + interazioni passive) → **2)** sce
 | 14 | Sera | Parte chi ha punteggio netto minore, parità: dado. Pareggio finale possibile |
 | 15b | Primo turno | Le interazioni passive valgono anche al turno 1 (mani vuote): una penalità iniziale è possibile ed è casualità voluta |
 | 15 | Informazione | Risorse in mano e Flow (dopo la scelta) sono pubblici |
-| 16 | Non implementato | Obiettivi Segreti, catch-up, "Soffio" (TBD nel regolamento) |
+| 16 | Obiettivi segreti | Pesca 2 carte "posizione" + 2 "mano e stile", ne tieni 2. Si controllano solo guardando il tavolo a fine partita (nessun conteggio nel tempo). Non riuscito = +1 Rancore. Vedi tabella sotto |
+| 17 | Catch-up | Nell'ultimo turno chi parte per primo (è in svantaggio) prende +2 PF, una volta sola (parametro `lastTurnFirstBonus`) |
+| 18 | Non implementato | "Soffio" (TBD nel regolamento) |
 
 ## Parametri variabili (Varianti di regole)
 `turns`, `handLimit`, `j2Charges`, `noDemandGive`, `coccolonePF`, `eveningLowestFirst`.
+
+## Obiettivi segreti (valori provvisori, da tarare con la simulazione)
+| Carta | Si controlla | Punti | Riuscito (AI difficile che lo cerca) |
+|---|---|---|---|
+| Il tuo angolo ×9 (una per stanza) | la tua pedina è in quella stanza | +2 | 33–45% |
+| Compagno di cuscino | sei nella stanza di Heafy | +2 | 33% |
+| Tasche piene | 2 risorse in mano | +1 | 96% (regalo) |
+| Coppia | 2 risorse uguali in mano | +3 | 78% (troppo facile) |
+| Il set ×5 | proprio quelle 2 risorse in mano (Snack+Giochino, Giochino+Cuscino, Paletta+Snack +3; Cuscino+Coccola, Coccola+Paletta +4) | +3 / +4 | 31–45% |
+| Risparmiatore | non hai mai usato J2 | +5 | 100% (troppo forte: un J2 vale ~2,9 PF) |
+
+Valore atteso = riuscito × punti − non riuscito × 1 Rancore. Punti modificabili in `js/data.js` (`FF.OBJECTIVES`).

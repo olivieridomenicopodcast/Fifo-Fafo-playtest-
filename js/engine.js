@@ -91,6 +91,7 @@
       }));
       s.turn = 0; s.first = 0; s.phase = 'setup'; s.over = false;
       s.lastFlows = null;
+      s.objectives = [[], []]; // id degli obiettivi segreti tenuti da ciascun giocatore
       return s;
     }
 
@@ -172,11 +173,24 @@
       b = this.say('sys', `🎮 Partita iniziata — seed ${this.cfg.seed}. ${this.pn(0)} (G1) parte dalla ${this.rname(s.players[0].pos)}, ${this.pn(1)} (G2) dalla ${this.rname(s.players[1].pos)}. 🐱 Heafy dorme in ${this.rname(s.heafy.pos)}.`);
       if (b) yield b;
       this.emit('sys', '🌀 Ruota Mood: ' + s.wheel.map((m) => MOODS[m].e + MOODS[m].name).join(' → '));
+      if (this.rules.objectives) yield* this.dealObjectives();
       for (s.turn = 1; s.turn <= this.rules.turns; s.turn++) yield* this.turnGen();
       s.turn = this.rules.turns;
       s.phase = 'end'; s.over = true;
-      const sc = [this.score(0), this.score(1)];
-      this.result = { scores: sc, pf: [s.players[0].pf, s.players[1].pf], rancor: [s.players[0].rancor, s.players[1].rancor], winner: sc[0] === sc[1] ? null : (sc[0] > sc[1] ? 0 : 1) };
+      // rivelazione degli obiettivi segreti
+      const objs = [[], []], objPts = [0, 0];
+      for (let pid = 0; pid < 2; pid++) {
+        for (const id of s.objectives[pid]) {
+          const o = FF.OBJECTIVES[id], ok = this.objectiveDone(pid, id);
+          objs[pid].push({ id, ok, pts: o.pts });
+          this.stat('obj_scelto:' + id, pid);
+          if (ok) { objPts[pid] += o.pts; this.stat('obj_riuscito:' + id, pid); } else { s.players[pid].rancor += this.rules.objectiveFailRancor; this.stat('obj_fallito', pid); }
+          b = this.say('obj', `🎯 ${this.pn(pid)} rivela «${o.name}»: ${ok ? `✔ riuscito → +${o.pts} PF` : `✘ non riuscito → +${this.rules.objectiveFailRancor} Rancore`}`, pid);
+          if (b) yield b;
+        }
+      }
+      const sc = [0, 1].map((i) => this.score(i) + objPts[i]);
+      this.result = { scores: sc, pf: [s.players[0].pf, s.players[1].pf], rancor: [s.players[0].rancor, s.players[1].rancor], objPts, objs, winner: sc[0] === sc[1] ? null : (sc[0] > sc[1] ? 0 : 1) };
       b = this.say('end', `🏁 Fine partita! ${this.pn(0)} ${sc[0]} — ${this.pn(1)} ${sc[1]} → ` + (this.result.winner == null ? 'PAREGGIO' : `vince ${this.pn(this.result.winner)}`));
       if (b) yield b;
       return this.result;
@@ -195,6 +209,11 @@
         s.first = a < c ? 0 : c < a ? 1 : this.rollOff(0, 1, 'Sera, parità: chi parte').win;
       } else s.first = 0;
       let b;
+      if (s.turn === this.rules.turns && per === 2 && this.rules.eveningLowestFirst && this.rules.lastTurnFirstBonus) {
+        this.addPF(s.first, this.rules.lastTurnFirstBonus, 'ultimo_turno_primo');
+        b = this.say('pf', `🌙 Ultimo turno: ${this.pn(s.first)} è in svantaggio e parte per primo → +${this.rules.lastTurnFirstBonus} PF`, s.first);
+        if (b) yield b;
+      }
       const tp = this.rules.turns / 3;
       if ((s.turn - 1) % tp === 0) {
         const who = per === 0 ? `Per tutto il mattino parte per primo ${this.pn(0)} (G1).` : per === 1 ? `Per tutto il pomeriggio parte per primo ${this.pn(1)} (G2).` : 'Di sera parte per primo chi ha meno punti (a parità, dado).';
@@ -224,6 +243,36 @@
       const order = [s.first, 1 - s.first];
       for (const pid of order) yield* this.resolveFlow(pid, flows[pid]);
       yield* this.endTurn();
+    }
+
+    // pesca (2 da A + 2 da B) e scelta degli obiettivi segreti
+    *dealObjectives() {
+      const s = this.s, keep = this.rules.objectivesKeep;
+      const A = this._shuffle(FF.OBJECTIVE_IDS.filter((id) => FF.OBJECTIVES[id].deck === 'A'));
+      const B = this._shuffle(FF.OBJECTIVE_IDS.filter((id) => FF.OBJECTIVES[id].deck === 'B'));
+      for (let pid = 0; pid < 2; pid++) {
+        const offer = [A.pop(), A.pop(), B.pop(), B.pop()];
+        const ans = yield* this.ask({ type: 'objectives', player: pid, offer, keep });
+        let picks = Array.isArray(ans) ? ans.filter((id, i, a) => offer.includes(id) && a.indexOf(id) === i).slice(0, keep) : [];
+        for (const id of [offer[0], offer[2], offer[1], offer[3]]) if (picks.length < keep && !picks.includes(id)) picks.push(id);
+        s.objectives[pid] = picks;
+        const b = this.say('sys', `🎯 ${this.pn(pid)} ha scelto ${keep} obiettivi segreti (si rivelano a fine partita).`, pid);
+        if (b) yield b;
+      }
+    }
+
+    // l'obiettivo è soddisfatto ADESSO (guardando il tavolo)?
+    objectiveDone(pid, id) {
+      const s = this.s, p = s.players[pid], o = FF.OBJECTIVES[id];
+      switch (o.kind) {
+        case 'angolo': return this.room(p.pos).id === o.room;
+        case 'compagno': return p.pos === s.heafy.pos;
+        case 'tasche': return p.hand.length >= this.rules.handLimit;
+        case 'coppia': return p.hand.length === 2 && p.hand[0] === p.hand[1];
+        case 'set': return p.hand.length === 2 && p.hand.includes(o.a) && p.hand.includes(o.b);
+        case 'risparmiatore': return p.j2 === this.rules.j2Charges;
+        default: return false;
+      }
     }
 
     validFlow(pid, f) {

@@ -36,12 +36,38 @@
   }
   AI.resValue = resValue;
 
+  // Valore degli obiettivi segreti propri guardando il tavolo ORA (come se la partita finisse adesso).
+  // Quelli di posizione/mano pesano di più verso la fine; il Risparmiatore pesa sempre (una volta usato J2, è perso).
+  function objTerm(game, pid) {
+    const s = game.s;
+    if (!game.rules.objectives || !s.objectives[pid].length) return 0;
+    const T = game.rules.turns, ramp = Math.min(1, Math.max(0, (s.turn - (T - 3)) / 3));
+    let v = 0;
+    for (const id of s.objectives[pid]) {
+      const o = FF.OBJECTIVES[id], w = o.kind === 'risparmiatore' ? 1 : ramp;
+      if (w) v += w * (game.objectiveDone(pid, id) ? o.pts : -game.rules.objectiveFailRancor);
+    }
+    return v;
+  }
+
+  // Quali obiettivi tenere tra quelli pescati (stima di quanto sono realistici)
+  const FEAS = { angolo: 0.5, compagno: 0.7, tasche: 0.65, coppia: 0.3, set: 0.25, risparmiatore: 0.4 };
+  function chooseObjectives(game, offer, keep, rng, random) {
+    const sc = offer.map((id) => {
+      const o = FF.OBJECTIVES[id];
+      const f = (FEAS[o.kind] || 0.3) * (o.kind === 'set' && (o.a === 'coccola' || o.b === 'coccola') ? 0.7 : 1);
+      return { id, v: random ? rng() : f * o.pts - (1 - f) * game.rules.objectiveFailRancor + rng() * 0.05 };
+    }).sort((a, b) => b.v - a.v);
+    return sc.slice(0, keep).map((x) => x.id);
+  }
+
   function evalState(game, pid) {
     const s = game.s, opp = 1 - pid;
     const left = Math.max(0, game.rules.turns - s.turn) / game.rules.turns;
     return (game.score(pid) - game.score(opp)) - (s.players[pid].waste - s.players[opp].waste)
       + handValue(game, s.players[pid].hand) - 0.4 * handValue(game, s.players[opp].hand)
-      + CUR.j2w * left * (s.players[pid].j2 - s.players[opp].j2);
+      + CUR.j2w * left * (s.players[pid].j2 - s.players[opp].j2)
+      + objTerm(game, pid);
   }
 
   // ───────────────────────── policy "greedy" ─────────────────────────
@@ -253,6 +279,7 @@
         CUR = P;
         switch (d.type) {
           case 'flow': plan = null; return chooseFlow(game, d);
+          case 'objectives': return chooseObjectives(game, d.offer, d.keep, rng, level === 'easy');
           case 'j2step':
             if (level === 'easy') return d.canFinish && rng() < 0.5 ? { k: 'done' } : d.options[Math.floor(rng() * d.options.length)];
             if (level === 'hard') {

@@ -124,6 +124,26 @@
     }).join('');
   };
 
+  // ── carte obiettivo segreto ──
+  function objArt(o) {
+    const two = (a, b) => `<span class="oart2">${a}${b}</span>`;
+    switch (o.kind) {
+      case 'angolo': return SP.room(o.room);
+      case 'compagno': return `<span class="oart2"><span class="opawn">${SP.pawn(0)}</span>${SP.cat('coccolone')}</span>`;
+      case 'tasche': return two(SP.use('slot'), SP.use('slot'));
+      case 'coppia': return two(SP.res('snack'), SP.res('snack'));
+      case 'set': return two(SP.res(o.a), SP.res(o.b));
+      case 'risparmiatore': return `<span class="oart2">${SP.card('J2')}<span class="ocross">✘</span></span>`;
+      default: return '';
+    }
+  }
+  // state: 'ok' | 'ko' | null (stato attuale, solo se mostrato)
+  UI.objCard = function (id, state, final) {
+    const o = FF.OBJECTIVES[id];
+    const st = !state ? '' : final ? (state === 'ok' ? `✔ riuscito: +${o.pts} PF` : '✘ non riuscito: +1 Rancore') : (state === 'ok' ? '✔ ora è soddisfatto' : '✘ non ancora');
+    return `<div class="ocard ${state || ''}"><div class="oart">${objArt(o)}</div><div class="obody"><b>${esc(o.name)}</b><span>${esc(o.desc)}</span>${st ? `<em class="ostate">${st}</em>` : ''}</div><div class="opts-pts">+${o.pts}</div></div>`;
+  };
+
   // ── legenda ──
   UI.legendHTML = function () {
     const row = (spr, txt) => `<div class="lg"><span class="lgi">${spr}</span><span>${txt}</span></div>`;
@@ -140,6 +160,7 @@
       row(SP.card('B1'), '<b>Carta B</b> cestino: raccogli 1 risorsa nella stanza in cui sei'),
       row(SP.card('C1'), '<b>Carta C</b> zampa: interagisci con Heafy (devi essere nella sua stanza)'),
       row(SP.card('J2'), '<b>Carta J</b> stella: Jolly (J2 solo 2 volte a partita)'),
+      row('<span class="oleg">🎯</span>', '<b>Obiettivi segreti</b>: carte che dai punti a fine partita se guardando il tavolo risultano soddisfatte, altrimenti ti costano un Rancore'),
     ].join('');
   };
 

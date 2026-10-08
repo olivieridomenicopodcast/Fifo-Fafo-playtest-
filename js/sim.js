@@ -49,6 +49,7 @@
       moodPF: {},                  // mood → somma PF (entrambi) e turni
       moodTurns: {},
       traj: { sumG1: [], sumG2: [], cnt: [] },
+      objs: {},                    // obiettivo → { kept, done }
       games: [],                   // riassunto compatto di ogni partita
       logs: [],                    // log completi delle prime partite
       ms: 0,
@@ -74,7 +75,8 @@
       for (const m in g.stats.moodPF) agg.moodPF[m] = (agg.moodPF[m] || 0) + g.stats.moodPF[m][0] + g.stats.moodPF[m][1];
       for (const k in g.stats.g) if (k.startsWith('mood_')) agg.moodTurns[k.slice(5)] = (agg.moodTurns[k.slice(5)] || 0) + g.stats.g[k];
       traj.forEach((v, t) => { if (!v) return; agg.traj.sumG1[t] = (agg.traj.sumG1[t] || 0) + v[0]; agg.traj.sumG2[t] = (agg.traj.sumG2[t] || 0) + v[1]; agg.traj.cnt[t] = (agg.traj.cnt[t] || 0) + 1; });
-      agg.games.push({ i, seed, aSeat, scores: res.scores, winner: win, pf: res.pf, rancor: res.rancor });
+      for (const list of res.objs || []) for (const ob of list) { const e = (agg.objs[ob.id] = agg.objs[ob.id] || { kept: 0, done: 0, pts: ob.pts }); e.kept++; if (ob.ok) e.done++; }
+      agg.games.push({ i, seed, aSeat, scores: res.scores, winner: win, pf: res.pf, rancor: res.rancor, objPts: res.objPts });
       if (g.logOn) agg.logs.push({ i, seed, aSeat, scores: res.scores, winner: win, lines: g.events.map((e) => ({ t: e.t, k: e.k, p: e.p, text: e.text })) });
       if (onProgress && Date.now() - last > 60) { last = Date.now(); onProgress(i + 1, n); await tick(); }
     }
@@ -133,6 +135,13 @@
       lines.push(`| ${FF.SPECIAL[id].e} ${FF.SPECIAL[id].name} | – | ${f1(pf / n)} | – |`);
     }
     lines.push('');
+    if (Object.keys(a.objs).length) {
+      lines.push('## Obiettivi segreti');
+      lines.push('| Obiettivo | Punti | Tenuto | Riuscito |');
+      lines.push('|---|---|---|---|');
+      for (const id of Object.keys(a.objs).sort((x, y) => a.objs[y].kept - a.objs[x].kept)) { const e = a.objs[id]; lines.push(`| ${FF.OBJECTIVES[id].name} | +${e.pts} | ${e.kept} | ${pct(e.done, e.kept)} |`); }
+      lines.push('');
+    }
     lines.push('## Eventi di gioco (medie per partita, per giocatore)');
     const keys = new Set([...Object.keys(a.stats.A), ...Object.keys(a.stats.B)]);
     lines.push('| Evento | A | B | G1 | G2 |');
@@ -154,7 +163,7 @@
     interact: 'interazioni totali', interact_passive: 'interazioni passive (Heafy arriva)', c1_senza_heafy: 'C1 senza Heafy (abbandona risorsa)',
     c1_sprecata: 'C1 sprecata (già interagito)', b1_raccolte: 'B1 raccolte', b1_mano_piena: 'B1 con mano piena', b1_vuota: 'B1 in stanza vuota',
     risorse_date: 'risorse date a Heafy', mosse: 'stanze percorse con A', j2_usate: 'J2 usati', j2_mosse: 'J2 spostamenti', j2_raccolte: 'J2 raccolte sicure',
-    j2_trasporti: 'J2 trasporti di Heafy', rancori: 'Rancori ottenuti',
+    j2_trasporti: 'J2 trasporti di Heafy', rancori: 'Rancori ottenuti', obj_fallito: 'obiettivi falliti', 'pf+ultimo_turno_primo': '+PF bonus ultimo turno (chi è in svantaggio)',
     offesissimo_scattato: 'Offesissimo scattato', offesissimo_causato: 'Offesissimo causato dal giocatore', arrab_scattato: 'Arrabbiatissimo scattato',
     irrequieto_inversioni: 'Irrequieto: inversioni di direzione', bisognoso_to_irrequieto: 'Bisognoso → Irrequieto', dispettoso_buttate: 'risorse buttate da Dispettoso',
   };

@@ -34,7 +34,7 @@
     opts = opts || {};
     const wrap = document.createElement('div');
     wrap.className = 'overlay' + (opts.solid ? ' solid' : '');
-    wrap.innerHTML = `<div class="dlg ${opts.left ? 'left' : ''}">${html}</div>`;
+    wrap.innerHTML = `<div class="dlg ${opts.left ? 'left' : ''} ${opts.wide ? 'wide' : ''}">${html}</div>`;
     UI.$('#modal-root').appendChild(wrap);
     const api = { el: wrap.firstElementChild, close() { wrap.remove(); } };
     if (opts.dismiss !== false) wrap.addEventListener('click', (e) => { if (e.target === wrap) api.close(); });
