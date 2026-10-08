@@ -41,5 +41,5 @@ node tools/sim.js --games 300 --rule handLimit=3 --log 2
 | `js/sim.js` | simulazioni in blocco, statistiche, report |
 | `js/ui/*` | interfaccia (plancia, partita, simulazione, regole) |
 
-Regole e interpretazioni delle parti ambigue: `docs/REGOLE_IMPLEMENTATE.md`.
+Il regolamento completo (fonte unica, mostrato anche nell'app alla voce 📖 Regole) è in `docs/REGOLAMENTO.md`: dopo ogni modifica lancia `node tools/build-rules.js`.
 Regolamento originale: repo *Fifo Fafo*; versione precedente: *Fifo Fafo Digital Version*.

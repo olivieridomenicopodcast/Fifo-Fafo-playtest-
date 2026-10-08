@@ -35,6 +35,33 @@
     return { g, res, aSeat, seed, traj };
   };
 
+  /* Analisi di TUTTI gli obiettivi: per ognuno, il profilo A lo "ha in mano" (solo quello) e lo insegue contro il profilo B.
+     Serve a tarare i punti anche per le carte che le AI non scelgono mai da sole. */
+  Sim.analyzeObjectives = async function (opts, perObj, onProgress, cancel) {
+    const rows = []; const total = FF.OBJECTIVE_IDS.length * perObj; let done = 0, last = Date.now();
+    const rules = Object.assign({}, opts.rules || {}, { objectives: true });
+    for (const id of FF.OBJECTIVE_IDS) {
+      let ok = 0, diff = 0, n = 0;
+      for (let i = 0; i < perObj; i++) {
+        if (cancel && cancel.cancelled) break;
+        const seed = (opts.seed || 'obj') + ':' + id + ':' + i, seat = i % 2;
+        const g = new FF.Game({ seed, rules, log: false, stats: false });
+        g.dealObjectives = function* () {}; // niente pesca: assegniamo noi
+        g.s.objectives[seat] = [id]; g.s.objectives[1 - seat] = [];
+        const ai = [null, null]; ai[seat] = FF.AI.create(opts.a, seed + 'a'); ai[1 - seat] = FF.AI.create(opts.b, seed + 'b');
+        const r = FF.drive(g, g.run(), (game, d) => ai[d.player].decide(game, d));
+        if (r.objs[seat][0].ok) ok++;
+        diff += r.scores[seat] - r.scores[1 - seat]; n++; done++;
+        if (onProgress && Date.now() - last > 60) { last = Date.now(); onProgress(done, total); await tick(); }
+      }
+      const o = FF.OBJECTIVES[id], rate = n ? ok / n : 0, fail = rules.objectiveFailRancor == null ? FF.DEFAULT_RULES.objectiveFailRancor : rules.objectiveFailRancor;
+      rows.push({ id, name: o.name, pts: o.pts, rate, ev: rate * o.pts - (1 - rate) * fail, diff: n ? diff / n : 0, n });
+      if (cancel && cancel.cancelled) break;
+    }
+    if (onProgress) onProgress(total, total);
+    return rows;
+  };
+
   Sim.run = async function (opts, onProgress, cancel) {
     const n = opts.games;
     const agg = {

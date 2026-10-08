@@ -32,12 +32,17 @@
         <div class="field"><label>Valori da provare (separati da virgola)</label><input type="text" id="ex-vals" value="1,2,3"></div></div>
         <div class="field"><label>Partite per valore</label><input type="number" id="ex-n" value="200" min="20" max="2000"></div>
         <button class="btn primary" id="ex-go">🧪 Esegui esperimento</button><div id="ex-out" style="margin-top:12px"></div></div>
+      <div class="card"><h2>🎯 Analisi di tutti gli obiettivi</h2>
+        <p class="small muted" style="margin-bottom:10px">Per ogni carta, il Profilo A la tiene (da sola) e la insegue contro il Profilo B. Mostra quanto riesce davvero e il valore atteso (riuscito × punti − fallito × Rancori), anche per le carte che le AI non scelgono mai da sole. Usa i profili, il seed e le varianti di regole scelti sopra.</p>
+        <div class="field"><label>Partite per obiettivo</label><input type="number" id="ob-n" value="60" min="20" max="500"></div>
+        <button class="btn primary" id="ob-go">🎯 Analizza gli obiettivi</button><div id="ob-out" style="margin-top:12px"></div></div>
       <div id="sm-res"></div></div>`;
     ['sm-a', 'sm-b', 'sm-n'].forEach((id) => UI.seg($('#' + id)));
     $('#sm-back').onclick = () => UI.go('home');
     $('#sm-go').onclick = runMain;
     $('#sm-stop').onclick = () => { if (cancelFlag) cancelFlag.cancelled = true; };
     $('#ex-go').onclick = runExperiment;
+    $('#ob-go').onclick = runObjectives;
   };
 
   function readOpts() {
@@ -197,6 +202,24 @@
     const levels = [null, null]; levels[gm.aSeat] = o.a; levels[1 - gm.aSeat] = o.b;
     const names = [null, null]; names[gm.aSeat] = 'A·' + o.a; names[1 - gm.aSeat] = 'B·' + o.b;
     UI.startSession({ mode: 'watch', seed: gm.seed, rules: o.rules, speed: 'normal', players: levels.map((l, k) => ({ name: names[k], kind: 'ai', level: l })) });
+  }
+
+  async function runObjectives() {
+    const o = readOpts();
+    const per = Math.max(20, Math.min(500, Number($('#ob-n').value) || 60));
+    ['#ob-go', '#ex-go', '#sm-go'].forEach((s) => ($(s).disabled = true));
+    cancelFlag = { cancelled: false };
+    setProg(true, 0, 1, 'analisi obiettivi…');
+    const rows = await FF.Sim.analyzeObjectives(o, per, (i, n) => setProg(true, i, n, `analisi obiettivi ${i}/${n}`), cancelFlag);
+    setProg(false);
+    ['#ob-go', '#ex-go', '#sm-go'].forEach((s) => ($(s).disabled = false));
+    const rate = (r) => (100 * r.rate).toFixed(0) + '%';
+    const hint = (r) => (r.ev > 1.6 ? 'troppo facile' : r.ev < 0.1 ? 'poco conveniente' : 'ok');
+    $('#ob-out').innerHTML = `<div class="tscroll"><table class="t"><tr><th>Obiettivo</th><th>Punti</th><th>Riesce</th><th>Valore atteso</th><th>Scarto vs avversario</th><th></th></tr>
+      ${rows.map((r) => `<tr><td>${esc(r.name)}</td><td>+${r.pts}</td><td>${rate(r)}</td><td>${r.ev.toFixed(2)}</td><td>${r.diff.toFixed(1)}</td><td>${hint(r)}</td></tr>`).join('')}</table></div>
+      <div class="small muted" style="margin-top:6px">${per} partite per obiettivo. Valore atteso vicino a 0 = scelta rischiosa; sopra ~1,6 = troppo facile. “Scarto” = punteggio finale medio di chi tiene la carta meno quello dell'avversario (senza obiettivi): se è molto positivo la carta, oltre ai punti, ti fa giocare meglio.</div>
+      <div class="btn-row" style="margin-top:8px"><button class="btn sm" id="ob-copy">📋 Copia tabella</button></div>`;
+    $('#ob-copy').onclick = () => UI.copy(rows.map((r) => `${r.name} (+${r.pts}): riesce ${rate(r)}, valore atteso ${r.ev.toFixed(2)}, scarto ${r.diff.toFixed(1)}`).join('\n'));
   }
 
   // ───────────────────────── esperimento ─────────────────────────

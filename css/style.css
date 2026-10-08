@@ -361,3 +361,8 @@ svg.sp.inl { display: inline-block; width: 26px; height: 36px; vertical-align: m
 @media (max-width: 560px) { .dlg .row2 { grid-template-columns: 1fr; } .ocard .oart { width: 74px; } }
 
 .ocard .omoon { font-size: 2rem; line-height: 1; } .ocard .onum { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 1.2rem; color: var(--accent2); }
+
+.rulebook h2 { font-size: 1.7rem; } .rulebook h3.rh { font-size: 1.25rem; color: var(--accent2); margin: 22px 0 8px; padding-top: 10px; border-top: 2px dashed var(--border); text-transform: none; letter-spacing: 0; }
+.rulebook h4 { font-size: 1.05rem; color: var(--accent2); margin: 14px 0 4px; }
+.rulebook p, .rulebook li { font-size: 1.02rem; margin-bottom: 7px; } .rulebook ul, .rulebook ol { padding-left: 24px; margin-bottom: 8px; }
+.rulebook table.rt td, .rulebook table.rt th { text-align: left; vertical-align: top; }

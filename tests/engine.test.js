@@ -353,3 +353,17 @@ test('valori degli obiettivi dopo la taratura', () => {
   assert.equal(pts('coppia'), 2); assert.equal(pts('tasche'), 1); assert.equal(pts('primoSera'), 2);
   assert.equal(FF.DEFAULT_RULES.lastTurnFirstBonus, undefined);
 });
+
+test('regolamento (docs/REGOLAMENTO.md): punti degli obiettivi coerenti con il codice, rulebook.js aggiornato', () => {
+  const fs = require('fs'), path = require('path');
+  const md = fs.readFileSync(path.join(__dirname, '..', 'docs', 'REGOLAMENTO.md'), 'utf8');
+  const gen = fs.readFileSync(path.join(__dirname, '..', 'js', 'rulebook.js'), 'utf8');
+  assert.ok(gen.includes(JSON.stringify(md)), 'js/rulebook.js non aggiornato: lancia node tools/build-rules.js');
+  const row = (name) => md.split('\n').find((l) => l.startsWith('|') && l.includes(name));
+  const check = (name, pts) => { const r = row(name); assert.ok(r, name + ' manca nel regolamento'); assert.ok(r.trimEnd().endsWith('**+' + pts + '**|') || r.includes('**+' + pts + '**'), `${name}: nel regolamento i punti non sono +${pts}`); };
+  check('Il tuo angolo', FF.OBJECTIVES['angolo:cucina'].pts); check('Compagno di cuscino', FF.OBJECTIVES.compagno.pts);
+  check('Tasche piene', FF.OBJECTIVES.tasche.pts); check('| **Coppia**', FF.OBJECTIVES.coppia.pts);
+  check('Risparmiatore', FF.OBJECTIVES.risparmiatore.pts); check('Primo di sera', FF.OBJECTIVES.primoSera.pts);
+  for (const o of Object.values(FF.OBJECTIVES).filter((x) => x.kind === 'set')) check(`Il set: ${FF.RES[o.a].n} + ${FF.RES[o.b].n}`, o.pts);
+  FF.ROOMS.forEach((r) => assert.ok(md.includes(r.name + ' →') || md.includes(r.name + ' /') || md.includes(r.name), r.name));
+});

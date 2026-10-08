@@ -4,7 +4,7 @@
      e riceve la risposta; con `cfg.beats` emette anche {type:'beat'} dopo ogni evento (per animare).
    - RNG con seed → partite riproducibili. Le risposte date vengono registrate in `game.history`
      e si possono rigiocare con `cfg.replay`.
-   Le interpretazioni delle regole ambigue sono elencate in docs/REGOLE_IMPLEMENTATE.md */
+   Le interpretazioni delle regole ambigue sono elencate in docs/REGOLAMENTO.md */
 (function (root) {
   'use strict';
   const FF = (root.FF = root.FF || {});
