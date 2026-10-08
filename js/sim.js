@@ -163,7 +163,7 @@
     interact: 'interazioni totali', interact_passive: 'interazioni passive (Heafy arriva)', c1_senza_heafy: 'C1 senza Heafy (abbandona risorsa)',
     c1_sprecata: 'C1 sprecata (già interagito)', b1_raccolte: 'B1 raccolte', b1_mano_piena: 'B1 con mano piena', b1_vuota: 'B1 in stanza vuota',
     risorse_date: 'risorse date a Heafy', mosse: 'stanze percorse con A', j2_usate: 'J2 usati', j2_mosse: 'J2 spostamenti', j2_raccolte: 'J2 raccolte sicure',
-    j2_trasporti: 'J2 trasporti di Heafy', rancori: 'Rancori ottenuti', obj_fallito: 'obiettivi falliti', 'pf+ultimo_turno_primo': '+PF bonus ultimo turno (chi è in svantaggio)',
+    j2_trasporti: 'J2 trasporti di Heafy', rancori: 'Rancori ottenuti', obj_fallito: 'obiettivi falliti',
     offesissimo_scattato: 'Offesissimo scattato', offesissimo_causato: 'Offesissimo causato dal giocatore', arrab_scattato: 'Arrabbiatissimo scattato',
     irrequieto_inversioni: 'Irrequieto: inversioni di direzione', bisognoso_to_irrequieto: 'Bisognoso → Irrequieto', dispettoso_buttate: 'risorse buttate da Dispettoso',
   };

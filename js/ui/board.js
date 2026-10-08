@@ -133,6 +133,7 @@
       case 'tasche': return two(SP.use('slot'), SP.use('slot'));
       case 'coppia': return two(SP.res('snack'), SP.res('snack'));
       case 'set': return two(SP.res(o.a), SP.res(o.b));
+      case 'primoSera': return `<span class="oart2"><span class="omoon">🌙</span><span class="opawn">${SP.pawn(1)}</span><span class="onum">1°</span></span>`;
       case 'risparmiatore': return `<span class="oart2">${SP.card('J2')}<span class="ocross">✘</span></span>`;
       default: return '';
     }

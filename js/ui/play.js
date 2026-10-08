@@ -227,7 +227,7 @@
       const box = $('#g-objs'); if (!box) return;
       const g = this.game, s = g.s;
       if (!g.rules.objectives || !s.objectives[0].length) { box.innerHTML = '<div class="muted small">Nessun obiettivo in questa partita.</div>'; return; }
-      const card = (pid) => s.objectives[pid].map((id) => UI.objCard(id, g.objectiveDone(pid, id) ? 'ok' : 'ko')).join('');
+      const card = (pid) => s.objectives[pid].map((id) => UI.objCard(id, FF.OBJECTIVES[id].kind === 'primoSera' && s.eveningFirst == null ? null : g.objectiveDone(pid, id) ? 'ok' : 'ko')).join('');
       if (this.mode === 'ai') {
         const me = this.humanSeats[0];
         box.innerHTML = `<div class="small muted" style="margin-bottom:6px">Solo tu li vedi. Si rivelano a fine partita: ✔ = punti, ✘ = +1 Rancore. Lo stato è quello di adesso: conta quello dell'ultimo turno.</div>${card(me)}`;

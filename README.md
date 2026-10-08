@@ -14,7 +14,7 @@ Nessuna build: apri `index.html` (o `npm run serve` → http://localhost:8080). 
 Ogni partita ha un **seed**: stesso seed = stessa partita. Dal log si possono aggiungere note di playtest (📝).
 
 ## Obiettivi segreti e catch-up
-A inizio partita ognuno pesca 4 obiettivi e ne tiene 2; si rivelano e si controllano a fine partita guardando il tavolo (niente conteggi). Chi non li completa prende +1 Rancore. Nell'ultimo turno chi parte per primo (in svantaggio) prende +2 PF. Tutto è regolabile in *Varianti di regole* e il simulatore mostra quanto riesce ogni obiettivo.
+A inizio partita ognuno pesca 4 obiettivi e ne tiene 2; si rivelano e si controllano a fine partita guardando il tavolo (niente conteggi). Chi non li completa prende +1 Rancore. La carta "Primo di sera" premia chi è partito per primo la sera (cioè era in svantaggio). Tutto è regolabile in *Varianti di regole* e il simulatore mostra quanto riesce ogni obiettivo.
 
 ## Interfaccia di gioco
 - **Messaggi grandi** sopra la plancia per ogni mossa (anche dell'AI e di Heafy), da far avanzare a mano con *Avanti*, clic sul messaggio, Spazio o Invio; **⏩ Fino alla mia mossa** salta ai tuoi turni. Il cambio di momento della giornata (Mattino/Pomeriggio/Sera) chiede sempre il clic.

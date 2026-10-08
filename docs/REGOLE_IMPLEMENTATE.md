@@ -27,11 +27,11 @@ Turno: **1)** fase Heafy (mood + movimento + interazioni passive) → **2)** sce
 | 11 | Interazione | Una per turno a giocatore; C1 senza Heafy (o con Heafy in braccio all'avversario) = abbandoni una risorsa |
 | 12 | Trasporto (J2) | Heafy torna libero all'inizio della fase Heafy successiva; la risorsa portata si rilascia al deposito/rilascio. Rimosso l'obbligo di depositare "se A prima di J" (non sorge mai con questo modello) |
 | 13 | J2 | Ogni azione al massimo una volta; spostamento 1-2 in entrambi i sensi; "Prendi Heafy" non può essere ultima |
-| 14 | Sera | Parte chi ha punteggio netto minore, parità: dado. Pareggio finale possibile |
+| 14 | Sera | A inizio sera (turno 11) si decide chi parte per primo: punteggio netto minore, parità dado. Resta lo stesso per tutti e 5 i turni. Pareggio finale possibile |
 | 15b | Primo turno | Le interazioni passive valgono anche al turno 1 (mani vuote): una penalità iniziale è possibile ed è casualità voluta |
 | 15 | Informazione | Risorse in mano e Flow (dopo la scelta) sono pubblici |
 | 16 | Obiettivi segreti | Pesca 2 carte "posizione" + 2 "mano e stile", ne tieni 2. Si controllano solo guardando il tavolo a fine partita (nessun conteggio nel tempo). Non riuscito = +1 Rancore. Vedi tabella sotto |
-| 17 | Catch-up | Nell'ultimo turno chi parte per primo (è in svantaggio) prende +2 PF, una volta sola (parametro `lastTurnFirstBonus`) |
+| 17 | Catch-up | Carta obiettivo "Primo di sera" (+2): vale a chi, a fine partita, è risultato il primo di sera (cioè in svantaggio a inizio sera). Nessun bonus fuori dagli obiettivi |
 | 18 | Non implementato | "Soffio" (TBD nel regolamento) |
 
 ## Parametri variabili (Varianti di regole)
@@ -40,11 +40,12 @@ Turno: **1)** fase Heafy (mood + movimento + interazioni passive) → **2)** sce
 ## Obiettivi segreti (valori provvisori, da tarare con la simulazione)
 | Carta | Si controlla | Punti | Riuscito (AI difficile che lo cerca) |
 |---|---|---|---|
-| Il tuo angolo ×9 (una per stanza) | la tua pedina è in quella stanza | +2 | 33–45% |
-| Compagno di cuscino | sei nella stanza di Heafy | +2 | 33% |
+| Il tuo angolo ×9 (una per stanza) | la tua pedina è in quella stanza | +3 | 33–45% (misurato con +2) |
+| Compagno di cuscino | sei nella stanza di Heafy | +3 | 33% |
 | Tasche piene | 2 risorse in mano | +1 | 96% (regalo) |
-| Coppia | 2 risorse uguali in mano | +3 | 78% (troppo facile) |
+| Coppia | 2 risorse uguali in mano | +2 | 78% |
 | Il set ×5 | proprio quelle 2 risorse in mano (Snack+Giochino, Giochino+Cuscino, Paletta+Snack +3; Cuscino+Coccola, Coccola+Paletta +4) | +3 / +4 | 31–45% |
-| Risparmiatore | non hai mai usato J2 | +5 | 100% (troppo forte: un J2 vale ~2,9 PF) |
+| Risparmiatore | non hai mai usato J2 | +4 | 100% con +5 (un J2 vale ~2,9 PF) |
+| Primo di sera | a fine partita risulti il primo di sera | +2 | ~50% (dipende dai punti a inizio sera) |
 
 Valore atteso = riuscito × punti − non riuscito × 1 Rancore. Punti modificabili in `js/data.js` (`FF.OBJECTIVES`).

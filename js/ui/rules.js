@@ -20,10 +20,9 @@
     '<b>Interazione</b>: una sola per turno per giocatore (C1 o passiva). C1 con Heafy assente (o in braccio all\'avversario) = abbandoni una risorsa a scelta nella stanza.',
     '<b>Trasporto (J2)</b>: Heafy in braccio torna libero all\'inizio della fase Heafy del turno dopo. Mentre è in braccio l\'avversario non può interagire. La risorsa che gli fai portare viene rilasciata dove lo depositi o dove torna libero.',
     '<b>J2</b>: ogni azione (spostamento di 1-2 in uno dei due sensi, raccolta sicura, prendi Heafy, deposita Heafy) si usa al massimo una volta per attivazione, nell\'ordine che vuoi. "Prendi Heafy" non può essere l\'ultima azione.',
-    '<b>Sera</b>: parte chi ha il punteggio netto (PF − Rancori) più basso; a parità, dado. Il pareggio finale è possibile.',
+    '<b>Sera</b>: a inizio sera (turno 11) si decide chi parte per primo, cioè chi ha il punteggio netto (PF − Rancori) più basso; a parità, dado. Resta lo stesso per tutti e 5 i turni. Il pareggio finale è possibile.',
     '<b>Ruota</b>: i 10 mood compaiono una volta ciascuno in ordine casuale e si ripetono (15 turni). Risorse in mano e Flow rivelati prima della risoluzione sono informazione pubblica.',
-    '<b>Obiettivi segreti</b>: a inizio partita pesca 2 carte "posizione" + 2 "mano e stile" e ne tieni 2. Si controllano <i>solo guardando il tavolo a fine partita</i> (nessun conteggio): Il tuo angolo (sei in quella stanza) +2, Compagno di cuscino (sei nella stanza di Heafy) +2, Tasche piene (2 risorse in mano) +1, Coppia (2 risorse uguali) +3, Il set (proprio quelle 2 risorse) +3/+4, Risparmiatore (non hai mai usato J2) +5. Obiettivo non riuscito = +1 Rancore.',
-    '<b>Ultimo turno</b>: chi parte per primo (è in svantaggio) prende +2 PF, una sola volta (catch-up).',
+    '<b>Obiettivi segreti</b>: a inizio partita pesca 2 carte "posizione" + 2 "mano e stile" e ne tieni 2. Si controllano <i>solo guardando il tavolo a fine partita</i> (nessun conteggio): Il tuo angolo (sei in quella stanza) +3, Compagno di cuscino (sei nella stanza di Heafy) +3, Tasche piene (2 risorse in mano) +1, Coppia (2 risorse uguali) +2, Il set (proprio quelle 2 risorse) +3/+4, Risparmiatore (non hai mai usato J2) +4, Primo di sera (sei stato tu a partire per primo la sera, cioè eri in svantaggio) +2. Obiettivo non riuscito = +1 Rancore.',
     '<b>Non implementati</b> (TBD nel regolamento): mossa "Soffio".',
   ];
 

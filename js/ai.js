@@ -45,13 +45,14 @@
     let v = 0;
     for (const id of s.objectives[pid]) {
       const o = FF.OBJECTIVES[id], w = o.kind === 'risparmiatore' ? 1 : ramp;
+      if (o.kind === 'primoSera') continue; // si decide a inizio sera: l'AI non lo insegue
       if (w) v += w * (game.objectiveDone(pid, id) ? o.pts : -game.rules.objectiveFailRancor);
     }
     return v;
   }
 
   // Quali obiettivi tenere tra quelli pescati (stima di quanto sono realistici)
-  const FEAS = { angolo: 0.5, compagno: 0.7, tasche: 0.65, coppia: 0.3, set: 0.25, risparmiatore: 0.4 };
+  const FEAS = { angolo: 0.5, compagno: 0.7, tasche: 0.65, coppia: 0.3, set: 0.25, risparmiatore: 0.4, primoSera: 0.5 };
   function chooseObjectives(game, offer, keep, rng, random) {
     const sc = offer.map((id) => {
       const o = FF.OBJECTIVES[id];

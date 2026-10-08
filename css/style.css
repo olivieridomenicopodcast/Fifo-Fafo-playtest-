@@ -359,3 +359,5 @@ svg.sp.inl { display: inline-block; width: 26px; height: 36px; vertical-align: m
 .dlg.wide { max-width: 760px; }
 .dlg .ocard .oart { width: 72px; height: 56px; }
 @media (max-width: 560px) { .dlg .row2 { grid-template-columns: 1fr; } .ocard .oart { width: 74px; } }
+
+.ocard .omoon { font-size: 2rem; line-height: 1; } .ocard .onum { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 1.2rem; color: var(--accent2); }

@@ -92,6 +92,7 @@
       s.turn = 0; s.first = 0; s.phase = 'setup'; s.over = false;
       s.lastFlows = null;
       s.objectives = [[], []]; // id degli obiettivi segreti tenuti da ciascun giocatore
+      s.eveningFirst = null;   // chi parte per primo per tutta la sera (deciso a inizio sera)
       return s;
     }
 
@@ -205,18 +206,17 @@
       if (per === 0) s.first = 0;
       else if (per === 1) s.first = 1;
       else if (this.rules.eveningLowestFirst) {
-        const a = this.score(0), c = this.score(1);
-        s.first = a < c ? 0 : c < a ? 1 : this.rollOff(0, 1, 'Sera, parità: chi parte').win;
+        // l'ordine della sera si decide una volta sola, a inizio sera (chi ha meno punti; a parità dado), e vale per tutti i turni
+        if (s.eveningFirst == null) {
+          const a = this.score(0), c = this.score(1);
+          s.eveningFirst = a < c ? 0 : c < a ? 1 : this.rollOff(0, 1, 'Sera, parità: chi parte').win;
+        }
+        s.first = s.eveningFirst;
       } else s.first = 0;
       let b;
-      if (s.turn === this.rules.turns && per === 2 && this.rules.eveningLowestFirst && this.rules.lastTurnFirstBonus) {
-        this.addPF(s.first, this.rules.lastTurnFirstBonus, 'ultimo_turno_primo');
-        b = this.say('pf', `🌙 Ultimo turno: ${this.pn(s.first)} è in svantaggio e parte per primo → +${this.rules.lastTurnFirstBonus} PF`, s.first);
-        if (b) yield b;
-      }
       const tp = this.rules.turns / 3;
       if ((s.turn - 1) % tp === 0) {
-        const who = per === 0 ? `Per tutto il mattino parte per primo ${this.pn(0)} (G1).` : per === 1 ? `Per tutto il pomeriggio parte per primo ${this.pn(1)} (G2).` : 'Di sera parte per primo chi ha meno punti (a parità, dado).';
+        const who = per === 0 ? `Per tutto il mattino parte per primo ${this.pn(0)} (G1).` : per === 1 ? `Per tutto il pomeriggio parte per primo ${this.pn(1)} (G2).` : 'Di sera parte per primo, per tutti e 5 i turni, chi ha meno punti adesso (a parità, dado).';
         b = this.say('period', `${['🌄', '☀️', '🌙'][per]} Comincia ${['il MATTINO', 'il POMERIGGIO', 'la SERA'][per]} (turni ${s.turn}–${s.turn + tp - 1}). ${who}${per > 0 ? ' Ogni stanza ha ricevuto di nuovo la sua risorsa.' : ''}`, -1, { period: per });
         if (b) yield b;
       }
@@ -271,6 +271,7 @@
         case 'coppia': return p.hand.length === 2 && p.hand[0] === p.hand[1];
         case 'set': return p.hand.length === 2 && p.hand.includes(o.a) && p.hand.includes(o.b);
         case 'risparmiatore': return p.j2 === this.rules.j2Charges;
+        case 'primoSera': return s.eveningFirst === pid;
         default: return false;
       }
     }

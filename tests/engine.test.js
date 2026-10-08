@@ -336,13 +336,20 @@ test('controllo di ogni obiettivo', () => {
   assert.equal(g.objectiveDone(0, 'risparmiatore'), true); p.j2 = 1; assert.equal(g.objectiveDone(0, 'risparmiatore'), false);
 });
 
-test('ultimo turno: chi parte per primo (in svantaggio) prende il bonus, una volta sola', () => {
-  const g = new FF.Game({ seed: 'bonus', log: true });
+test('sera: l\'ordine si decide a inizio sera e resta uguale per i 5 turni; obiettivo "Primo di sera"', () => {
+  const g = new FF.Game({ seed: 'sera', log: true });
   const a = [FF.AI.create('easy', 1), FF.AI.create('easy', 2)];
-  FF.drive(g, g.run(), (game, d) => a[d.player].decide(game, d));
-  const ev = g.events.filter((e) => e.text.includes('Ultimo turno'));
-  assert.equal(ev.length, 1); assert.equal(ev[0].t, 15);
-  const g2 = new FF.Game({ seed: 'bonus', log: true, rules: { lastTurnFirstBonus: 0 } });
-  FF.drive(g2, g2.run(), (game, d) => a[d.player].decide(game, d));
-  assert.equal(g2.events.filter((e) => e.text.includes('Ultimo turno')).length, 0);
+  const firsts = {};
+  FF.drive(g, g.run(), (game, d) => { if (d.type === 'flow') firsts[game.s.turn] = game.s.first; return a[d.player].decide(game, d); });
+  for (let t2 = 12; t2 <= 15; t2++) assert.equal(firsts[t2], firsts[11]);
+  assert.equal(g.s.eveningFirst, firsts[11]);
+  assert.equal(g.objectiveDone(firsts[11], 'primoSera'), true);
+  assert.equal(g.objectiveDone(1 - firsts[11], 'primoSera'), false);
+});
+
+test('valori degli obiettivi dopo la taratura', () => {
+  const pts = (id) => FF.OBJECTIVES[id].pts;
+  assert.equal(pts('risparmiatore'), 4); assert.equal(pts('angolo:cucina'), 3); assert.equal(pts('compagno'), 3);
+  assert.equal(pts('coppia'), 2); assert.equal(pts('tasche'), 1); assert.equal(pts('primoSera'), 2);
+  assert.equal(FF.DEFAULT_RULES.lastTurnFirstBonus, undefined);
 });
