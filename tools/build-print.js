@@ -41,7 +41,7 @@ const FLOW = {
   C1: ['INTERAZIONE', '<b>Interagisci</b> con Heafy: devi essere nella sua stanza. Se non c\'è, abbandoni 1 risorsa nella stanza.'], C2: ['INTERAZIONE', 'Non interagisci.'],
   J1: ['JOLLY', 'Nessun effetto.'], J2: ['JOLLY', '<b>Jolly</b> (solo 2 volte a partita). Una volta ciascuna e in ordine libero: spostamento 1–2 · raccolta sicura · prendi Heafy · deposita Heafy.'],
 };
-const FLOWCOL = { A: '#2f6fb0', B: '#8a5a1a', C: '#c4691f', J: '#c79a12' };
+const FLOWCOL = { A: '#d23a2a', B: '#8a5a1a', C: '#3a9a3a', J: '#d9a514' };
 
 // ───────────────────────── elenco carte ─────────────────────────
 const cards = [];   // { g: gruppo, f: html fronte, b: html retro }
@@ -58,9 +58,7 @@ const BACKS = {
 const card = (cls, inner, style) => `<div class="cd ${cls}"${style ? ` style="${style}"` : ''}>${inner}</div>`;
 
 FF.ROOMS.forEach((r) => cards.push({ g: 'Stanze (si dispongono ad anello)', b: BACKS.room, f: card('room',
-  `<div class="art">${S.use('room-' + r.id)}</div><h3>${esc(r.name.toUpperCase())}</h3>
-   <div class="rs">${resSp(r.res)}<span>Risorsa: <b>${esc(FF.RES[r.res].n)}</b></span></div>
-   <p class="sm">Mettici sopra 1 gettone ${esc(FF.RES[r.res].n)}. A inizio Pomeriggio e Sera la stanza ne riceve un altro (anche se ne ha già).</p>`) }));
+  `<div class="rot"><div class="art">${S.use('room-' + r.id)}</div><h3>${esc(r.name.toUpperCase())}</h3><div class="tk">${resSp(r.res)}</div></div>`) }));
 
 [0, 1].forEach((pl) => ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'C1', 'C2', 'J1', 'J2'].forEach((code) => {
   const t = code[0], [title, txt] = FLOW[code];
@@ -68,15 +66,16 @@ FF.ROOMS.forEach((r) => cards.push({ g: 'Stanze (si dispongono ad anello)', b: B
     <div class="ic">${S.use('card-' + code)}</div><h2>${code}</h2><p>${txt}</p><div class="pl" style="background:${PCOL[pl]}">${sp('pawn-' + pl)}<span>mazzo ${PNAME[pl]}</span></div>`) });
 }));
 
-FF.MOOD_IDS.forEach((id) => { const m = FF.MOODS[id];
-  cards.push({ g: 'Carte mood (la ruota)', b: BACKS.mood, f: card('mood', `<div class="cat">${S.use('cat-' + id)}</div><h2>${esc(m.name.toUpperCase())}</h2>
-    <div class="lab">PRETENDE</div><div class="dm">${DEMAND_TXT(m)}</div><div class="lab">MOVIMENTO</div><p>${MOVE[id]}</p><div class="lab">QUANDO GLI DAI QUALCOSA</div><p>${EFF[id]}</p>`) }); });
-cards.push({ g: 'Mood fuori ruota (si tengono scoperte)', b: BACKS.ref, f: card('mood sp', `<div class="cat">${S.use('cat-offesissimo')}</div><h2>OFFESISSIMO</h2>
-  <div class="lab">NON PRETENDE NIENTE E NON ACCETTA NIENTE</div>
-  <p><b>Scatta</b> se non gli dai nulla (con un mood con pretesa) o se raccogli nella sua stanza, anche in un'interazione passiva. <b>Turno dopo</b>: si sposta di 1 nella direzione corrente e dà <b>−2 PF</b> a chi è nella stanza d'arrivo. Ancora dopo: <b>si calma</b> e la ruota riprende.</p>`) });
-cards.push({ g: 'Mood fuori ruota (si tengono scoperte)', b: BACKS.ref, f: card('mood sp', `<div class="cat">${S.use('cat-arrabbiatissimo')}</div><h2>ARRABBIATISSIMO</h2>
-  <div class="lab">PRETENDE 2 RISORSE QUALSIASI</div>
-  <p><b>Scatta</b> quando il counter (risorse sbagliate) arriva a 3. Resta fermo e la ruota non avanza. Inizio Fase Heafy: <b>−1 PF</b> a chi è nella sua stanza o adiacente. Gli dai 2 risorse: <b>+2 PF</b>, si calma e <b>la ruota avanza</b>. Meno di 2: −1 PF, non perdi nulla.</p>`) });
+const mrow = (id, long) => { const m = FF.MOODS[id], d = m.demand === 'any' ? 'una risorsa qualsiasi' : m.demand ? `<b>${FF.RES[m.demand].n}</b>` : 'niente di preciso';
+  return `<div class="mr"><span class="mc">${S.use('cat-' + id)}</span><b>${esc(m.name)}</b> <em>pretende: ${d}</em> — ${long ? `<u>Movimento</u> ${MOVE[id]} <u>Effetto</u> ${EFF[id]}` : MOVE[id]}</div>`; };
+const MCARD = (title, inner) => card('mood', `<div class="band">${title}</div>${inner}`);
+cards.push({ g: 'Riepilogo mood (si tengono scoperte)', b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 1/2 (ruota)',
+  `<div class="mx"><b>Mood con pretesa</b>: ${DEMAND_EFF}</div>${['affamato', 'assonnato', 'coccolone', 'giocherellone'].map((i) => mrow(i)).join('')}
+   <div class="mx"><b>Mood senza pretesa</b>: ${FREE_EFF}</div>${['curioso', 'neutro', 'iperattivo', 'dispettoso'].map((i) => mrow(i)).join('')}`) });
+cards.push({ g: 'Riepilogo mood (si tengono scoperte)', b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 2/2 (speciali)',
+  `${mrow('bisognoso', true)}${mrow('irrequieto', true)}
+   <div class="mr spc"><span class="mc">${S.use('cat-offesissimo')}</span><b>Offesissimo</b> <em>fuori ruota · non pretende e non accetta niente</em> — <u>Scatta</u> se non gli dai nulla (con un mood con pretesa) o se raccogli nella sua stanza, anche in un'interazione passiva. <u>Turno dopo</u>: si sposta di 1 nella direzione corrente e dà <b>−2 PF</b> a chi è nella stanza d'arrivo. Ancora dopo: <b>si calma</b> e la ruota riprende.</div>
+   <div class="mr spc"><span class="mc">${S.use('cat-arrabbiatissimo')}</span><b>Arrabbiatissimo</b> <em>fuori ruota · pretende 2 risorse qualsiasi</em> — <u>Scatta</u> quando il counter arriva a 3. Resta fermo e la ruota non avanza. Inizio Fase Heafy: <b>−1 PF</b> a chi è nella sua stanza o adiacente. Gli dai 2 risorse: <b>+2 PF</b>, si calma e <b>la ruota avanza</b>. Meno di 2: −1 PF, non perdi nulla.</div>`) });
 
 for (const id of FF.OBJECTIVE_IDS) { const o = FF.OBJECTIVES[id];
   const art = o.kind === 'angolo' ? S.use('room-' + o.room) : o.kind === 'compagno' ? `<span class="two">${S.use('pawn-0')}${S.use('cat-coccolone')}</span>`
@@ -128,8 +127,10 @@ const CSS_CARDS = `
 .cd::after { content: ''; position: absolute; inset: 1.6mm; border: .5mm solid #3b2410; border-radius: 3mm; pointer-events: none; }
 .cd h2 { margin: 0; font-size: 14pt; line-height: 1.1; } .cd h3 { margin: 1.2mm 0 0; font-size: 11pt; line-height: 1.1; } .cd p { margin: 1.4mm 0 0; font-size: 7.6pt; line-height: 1.28; } .cd p.sm { font-size: 6.8pt; color: #5a4430; }
 .cd .band { align-self: stretch; margin: 0 -1mm; padding: .9mm 1mm; color: #fff; font-weight: 800; font-size: 7.2pt; letter-spacing: .4pt; border-radius: 1.6mm; }
-.room .art { width: 100%; aspect-ratio: 4/3; border-radius: 2mm; overflow: hidden; margin-top: 1.5mm; border: .4mm solid #3b2410; } .room h3 { font-size: 13pt; margin-top: 2mm; }
-.room .rs { display: flex; align-items: center; gap: 2mm; margin-top: 2mm; font-size: 9pt; } .room .rs .sp { width: 12mm; height: 12mm; flex: none; }
+.room { padding: 0; background: #fff6dc; } .room .rot { position: absolute; left: 50%; top: 50%; width: 84mm; height: 63mm; margin: -31.5mm 0 0 -42mm; transform: rotate(90deg); border-radius: 2.5mm; overflow: hidden; border: .6mm solid #3b2410; }
+.room .art { position: absolute; inset: 0; } .room .art .sp svg { width: 100%; height: 100%; }
+.room h3 { position: absolute; left: 3mm; bottom: 3mm; margin: 0; padding: .8mm 3.5mm; font-size: 15pt; background: rgba(255,246,220,.95); border: .5mm solid #3b2410; border-radius: 2mm; }
+.room .tk { position: absolute; right: 3mm; bottom: 3mm; width: 14mm; height: 14mm; padding: 1.2mm; background: rgba(255,246,220,.95); border: .5mm solid #3b2410; border-radius: 50%; }
 .flow .ic { width: 25mm; height: 25mm; margin-top: 2mm; } .flow h2 { font-size: 22pt; margin-top: 1mm; } .flow p { font-size: 8.2pt; margin-top: 2mm; }
 .flow .pl { position: absolute; left: 3.6mm; right: 3.6mm; bottom: 3.6mm; border-radius: 2mm; color: #fff; font-weight: 800; font-size: 7pt; display: flex; align-items: center; justify-content: center; gap: 2mm; padding: .6mm 0; } .flow .pl .sp { width: 4.4mm; height: 6mm; flex: none; }
 .flow { background: #fffaf0; }
@@ -137,6 +138,8 @@ const CSS_CARDS = `
 .mood .lab { align-self: stretch; text-align: left; font-size: 6.3pt; font-weight: 800; letter-spacing: .6pt; color: #a8480f; margin-top: 1.7mm; border-bottom: .2mm solid #c9a46a; }
 .mood .dm { display: flex; align-items: center; gap: 1.6mm; font-size: 8.6pt; margin-top: .8mm; text-align: left; align-self: stretch; } .mood .dm .sp { width: 8mm; height: 8mm; flex: none; }
 .mood p { text-align: left; align-self: stretch; margin-top: .8mm; font-size: 7.2pt; line-height: 1.24; } .mood.sp { background: #ffe1d6; }
+.mood { padding: 2.4mm 3mm 2mm; } .mood .band { background: #8f2f2f; margin-top: .6mm; } .mx { align-self: stretch; text-align: left; font-size: 6pt; line-height: 1.2; margin-top: 1.2mm; color: #3b2410; background: #f1e1b8; border-radius: 1mm; padding: .6mm 1.2mm; }
+.mr, .mx { flex: none; } .mr { align-self: stretch; text-align: left; margin-top: 1.1mm; position: relative; padding-left: 5.6mm; font-size: 5.9pt; line-height: 1.15; min-height: 5mm; } .mr.spc { background: #ffe1d6; border-radius: 1mm; padding: .4mm 1mm .4mm 6.4mm; } .mr b { font-size: 6.5pt; } .mr em { font-style: normal; color: #a8480f; } .mc { position: absolute; left: 0; top: 0; width: 5mm; height: 5mm; } .mr.spc .mc { left: .8mm; top: .4mm; } .mc svg { width: 100%; height: 100%; display: block; } .mr u { text-decoration: none; font-weight: 800; color: #a8480f; }
 .obj .band { background: #5a3a22; } .obj.ob .band { background: #6b3f93; } .obj .art { width: 100%; height: 30mm; margin-top: 1.8mm; display: flex; align-items: center; justify-content: center; border-radius: 2mm; overflow: hidden; background: #efdcb4; border: .4mm solid #3b2410; }
 .obj .art > svg { width: 100%; height: 100%; } .obj .art .two { display: flex; align-items: center; justify-content: center; gap: 2mm; height: 100%; } .obj .art .two svg { width: 15mm; height: 22mm; }
 .obj .art .two svg[viewBox="0 0 48 48"] { width: 18mm; height: 18mm; } .obj .art .two svg[viewBox="0 0 64 64"] { width: 22mm; height: 22mm; } .obj .art .two svg[viewBox="-4 -4 108 108"] { width: 22mm; height: 22mm; }
@@ -167,17 +170,31 @@ const page = (inner, foot) => `<section class="land">${inner}<div class="foot">$
 const rowX = (n, i) => { const gap = 4, total = n * SW + (n - 1) * gap; return (297 - total) / 2 + i * (SW + gap); };
 
 function tabellone() {
-  const y1 = 7, y2 = y1 + SH + 4;
+  const y = (210 - SH) / 2;
   return page([
-    spot(rowX(4, 0), y1, 'MOOD · ORA', 'la carta mood attuale di Heafy, scoperta'),
-    spot(rowX(4, 1), y1, 'MOOD · DOPO', 'il prossimo mood: si vede (la ruota è pubblica)'),
-    spot(rowX(4, 2), y1, 'RUOTA · IN ARRIVO', 'le altre carte mood, scoperte, nell\'ordine in cui usciranno<br>(dopo l\'ultima si ricomincia dalla prima)'),
-    spot(rowX(4, 3), y1, 'RUOTA · GIÀ PASSATI', 'ogni mood finito va qui, scoperto'),
-    spot(rowX(4, 0), y2, 'OBIETTIVI · POSIZIONE', 'mazzo coperto<br>(10 carte)'),
-    spot(rowX(4, 1), y2, 'OBIETTIVI · MANO E STILE', 'mazzo coperto<br>(9 carte)'),
-    spot(rowX(4, 2), y2, 'MOOD FUORI RUOTA', 'qui la carta <b>Offesissimo</b> o <b>Arrabbiatissimo</b> quando è attivo (scoperta)'),
-    spot(rowX(4, 3), y2, 'RISERVA RISORSE', 'i gettoni Snack, Cuscino, Giochino, Paletta, Coccola'),
-  ].join(''), 'FIFO FAFO · tabellone · stampa su A4 orizzontale · le 9 carte Stanza si dispongono ad anello, vedi pagina 2');
+    spot(rowX(4, 0), y, 'OBIETTIVI · POSIZIONE', 'mazzo coperto<br>(10 carte)'),
+    spot(rowX(4, 1), y, 'OBIETTIVI · MANO E STILE', 'mazzo coperto<br>(9 carte)'),
+    spot(rowX(4, 2), y, 'RIEPILOGO MOOD', 'le 2 carte di riepilogo dei mood, scoperte<br>(la ruota è nella pagina dopo)'),
+    spot(rowX(4, 3), y, 'RISERVA RISORSE', 'i gettoni Snack, Cuscino, Giochino, Paletta, Coccola'),
+  ].join(''), 'FIFO FAFO · tabellone · stampa su A4 orizzontale · la ruota dei mood è la pagina 2, le 9 carte Stanza si dispongono ad anello (pagina 3)');
+}
+function ruota() {
+  const cx = 148.5, cy = 104, R = 98, R0 = 37, N = FF.MOOD_IDS.length, st = 360 / N, rad = (d) => d * Math.PI / 180;
+  const pt = (r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  let svg = '', html = '';
+  FF.MOOD_IDS.forEach((id, i) => {
+    const a0 = -90 + i * st, a1 = a0 + st, am = a0 + st / 2, m = FF.MOODS[id];
+    const [x0, y0] = pt(R, a0), [x1, y1] = pt(R, a1), [x2, y2] = pt(R0, a1), [x3, y3] = pt(R0, a0);
+    svg += `<path d="M${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${R0} ${R0} 0 0 0 ${x3} ${y3}Z" fill="${i % 2 ? '#f3e3b5' : '#fff6dc'}" stroke="#3b2410" stroke-width=".6"/>`;
+    const [px, py] = pt(70, am);
+    const dem = m.demand === 'any' ? 'una risorsa qualsiasi' : m.demand ? `<span class="wr">${resSp(m.demand)}</span><b>${esc(FF.RES[m.demand].n)}</b>` : 'niente di preciso';
+    html += `<div class="ws" style="left:${px}mm;top:${py}mm"><div class="wn">${i + 1}</div><div class="wc">${sp('cat-' + id)}</div><b>${esc(m.name.toUpperCase())}</b><div class="wd">${dem}</div></div>`;
+  });
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#3b2410" stroke-width="1.4"/><circle cx="${cx}" cy="${cy}" r="${R0}" fill="#fff" stroke="#3b2410" stroke-width="1.2"/>`;
+  return page(`<svg class="wsvg" viewBox="0 0 297 210">${svg}</svg>${html}
+    <div class="wh" style="left:${cx}mm;top:${cy}mm"><b>RUOTA DEL MOOD</b><span>Segnalino sul <b>mood attuale</b>. Il <b>prossimo</b> è il settore dopo, in senso orario ↻. Dopo il 10 si torna all'1.</span>
+    <div class="wx"><b>OFFESISSIMO</b><i>2° segnalino qui</i></div><div class="wx"><b>ARRABBIATISSIMO</b><i>2° segnalino qui</i></div></div>`,
+  'FIFO FAFO · ruota del mood · A4 orizzontale · dettagli di ogni mood sulle 2 carte di riepilogo');
 }
 function tracciati() {
   const turn = (n) => `<u class="tb">${n}</u>`;
@@ -226,9 +243,14 @@ const CSS_LAND = `
 .ll { position: absolute; left: 10mm; top: 114mm; width: 133mm; }
 .hd { display: inline-block; vertical-align: top; width: 62mm; margin-right: 3mm; white-space: nowrap; } .hs { display: flex; gap: 3mm; margin-top: 2mm; } .hs i { display: flex; width: 22mm; height: 22mm; border: .6mm dashed #777; border-radius: 50%; align-items: center; justify-content: center; font-style: normal; font-size: 16pt; color: #bbb; background: #fafafa; } .hs.j i { border-style: solid; color: #c79a12; }
 .memo { margin: 4mm 0 0; padding-left: 5mm; font-size: 8.4pt; line-height: 1.32; } .memo li { margin-bottom: 1.4mm; }
+.wsvg { position: absolute; left: 0; top: 0; width: 297mm; height: 210mm; }
+.ws { position: absolute; width: 33mm; transform: translate(-50%, -50%); text-align: center; font-size: 8.4pt; line-height: 1.15; } .ws .wc { width: 19mm; height: 19mm; margin: 0 auto 0.6mm; } .ws .wn { position: absolute; left: 1mm; top: -2mm; font-weight: 900; font-size: 10pt; color: #a8480f; }
+.ws .wd { display: flex; align-items: center; justify-content: center; gap: 1.2mm; font-size: 7.4pt; margin-top: .8mm; min-height: 6.5mm; } .ws .wr { width: 6.5mm; height: 6.5mm; flex: none; display: block; }
+.wh { position: absolute; width: 66mm; transform: translate(-50%, -50%); text-align: center; font-size: 7.4pt; line-height: 1.25; } .wh > b { font-size: 10.5pt; display: block; } .wh > span { display: block; margin: 1.5mm 0 2.5mm; }
+.wx { border: .5mm dashed #777; border-radius: 2.5mm; padding: 1.2mm 0; margin-top: 1.6mm; } .wx b { display: block; font-size: 8pt; } .wx i { font-size: 6.6pt; color: #555; font-style: normal; }
 @media print { html, body { background: none; } .land { margin: 0; } .noprint { display: none; } }
 .noprint { position: fixed; top: 6px; right: 6px; z-index: 9; font: 700 14px sans-serif; } .noprint button { padding: 8px 14px; font: inherit; border: 2px solid #333; border-radius: 8px; background: #ffd54a; cursor: pointer; }`;
-const landPages = [tabellone(), tracciati(), plancia(0), plancia(1)];
+const landPages = [tabellone(), ruota(), tracciati(), plancia(0), plancia(1)];
 fs.writeFileSync(path.join(out, 'tabellone-e-plance.html'), wrapHtml('FIFO FAFO — tabellone e plance', CSS_LAND, landPages.join('')));
 
 // ───────────────────────── foglio punti (A4 verticale, con esempio) ─────────────────────────

@@ -374,9 +374,9 @@ test('kit stampabile: conteggi, formato e niente undefined/NaN', () => {
   execFileSync('node', [path.join(root, 'tools', 'build-print.js'), '--no-pdf']);
   const rd = (f) => fs.readFileSync(path.join(root, 'stampa', f), 'utf8');
   const fr = rd('carte-fronte-retro.html'), so = rd('carte-solo-fronti.html');
-  assert.equal((fr.match(/class="sheet"/g) || []).length, 14);
-  assert.equal((so.match(/class="sheet"/g) || []).length, 7);
-  assert.equal((so.match(/class="c"/g) || []).length, 63);
+  assert.equal((fr.match(/class="sheet"/g) || []).length, 12);
+  assert.equal((so.match(/class="sheet"/g) || []).length, 6);
+  assert.equal((so.match(/class="c"/g) || []).length, 54);
   assert.ok(fr.includes('width: 63.5mm') && fr.includes('height: 88.9mm'));
   ['carte-fronte-retro.html', 'carte-solo-fronti.html', 'tabellone-e-plance.html', 'foglio-punti.html'].forEach((f) => {
     const h = rd(f); assert.ok(!h.includes('NaN') && !h.includes('undefined'), f);
@@ -384,7 +384,7 @@ test('kit stampabile: conteggi, formato e niente undefined/NaN', () => {
   const n = (re) => (so.match(re) || []).length;
   assert.equal(n(/class="cd room"/g), FF.ROOMS.length);
   assert.equal(n(/class="cd flow"/g), 20);
-  assert.equal(n(/class="cd mood"/g) + n(/class="cd mood sp"/g), 12);
+  assert.equal(n(/class="cd mood"/g), 2);   // 2 carte di riepilogo mood
   assert.equal(n(/class="cd obj o[ab]"/g), Object.keys(FF.OBJECTIVES).length);
   assert.equal(n(/class="cd refc"/g), 3);
 });

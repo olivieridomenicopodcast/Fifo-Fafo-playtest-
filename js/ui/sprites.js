@@ -170,13 +170,13 @@
 
   // ───────────────────────── icone carte (64×64) ─────────────────────────
   const arrow = (cw, pips) => {
-    const a = `<path d="M12 40 A22 22 0 0 1 50 26" fill="none" stroke="#2f6fb0" stroke-width="7" stroke-linecap="round"/><path d="M44 12 L58 28 L38 30z" fill="#2f6fb0" ${th}/>`;
-    const p = pips === 1 ? `<circle cx="32" cy="54" r="4.5" fill="#2f6fb0" ${th}/>` : `<circle cx="24" cy="54" r="4.5" fill="#2f6fb0" ${th}/><circle cx="40" cy="54" r="4.5" fill="#2f6fb0" ${th}/>`;
+    const a = `<path d="M12 40 A22 22 0 0 1 50 26" fill="none" stroke="#d23a2a" stroke-width="7" stroke-linecap="round"/><path d="M44 12 L58 28 L38 30z" fill="#d23a2a" ${th}/>`;
+    const p = pips === 1 ? `<circle cx="32" cy="54" r="4.5" fill="#d23a2a" ${th}/>` : `<circle cx="24" cy="54" r="4.5" fill="#d23a2a" ${th}/><circle cx="40" cy="54" r="4.5" fill="#d23a2a" ${th}/>`;
     return cw ? a + p : `<g transform="translate(64 0) scale(-1 1)">${a}</g>` + p;
   };
   const xmark = `<path d="M40 8 l16 16 M56 8 l-16 16" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>`;
   const basket = (x) => `<path d="M10 28 h44 l-6 26 h-32z" fill="#d9a05a" ${th}/><path d="M16 28 l4 26 M26 28 l1 26 M38 28 l-1 26 M48 28 l-4 26" stroke="${INK}" stroke-width="1.5"/><path d="M16 28 q16 -20 32 0" fill="none" stroke="#a8683a" stroke-width="4" stroke-linecap="round"/>${x ? xmark : '<circle cx="32" cy="16" r="6" fill="#e0793a" stroke="' + INK + '" stroke-width="2"/>'}`;
-  const paw = (x) => `<ellipse cx="32" cy="42" rx="14" ry="12" fill="#f0a24a" ${th}/><ellipse cx="15" cy="28" rx="5.5" ry="7" fill="#f0a24a" ${th}/><ellipse cx="26" cy="20" rx="5.5" ry="7.5" fill="#f0a24a" ${th}/><ellipse cx="38" cy="20" rx="5.5" ry="7.5" fill="#f0a24a" ${th}/><ellipse cx="49" cy="28" rx="5.5" ry="7" fill="#f0a24a" ${th}/>${x ? xmark : '<path d="M32 48 c-8 -5 -7 -11 -3 -10 q3 1 3 3 q0 -2 3 -3 c4 -1 5 5 -3 10z" fill="#e5457a"/>'}`;
+  const paw = (x) => `<ellipse cx="32" cy="42" rx="14" ry="12" fill="#5cb85c" ${th}/><ellipse cx="15" cy="28" rx="5.5" ry="7" fill="#5cb85c" ${th}/><ellipse cx="26" cy="20" rx="5.5" ry="7.5" fill="#5cb85c" ${th}/><ellipse cx="38" cy="20" rx="5.5" ry="7.5" fill="#5cb85c" ${th}/><ellipse cx="49" cy="28" rx="5.5" ry="7" fill="#5cb85c" ${th}/>${x ? xmark : '<path d="M32 48 c-8 -5 -7 -11 -3 -10 q3 1 3 3 q0 -2 3 -3 c4 -1 5 5 -3 10z" fill="#fff"/>'}`;
   const star = (on) => on
     ? `<path d="M32 6 L39 24 L58 25 L43 37 L48 56 L32 45 L16 56 L21 37 L6 25 L25 24Z" fill="#f5c542" ${ol}/><path d="M32 14 L36 26" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/><path d="M54 8 v8 M50 12 h8 M8 44 v7 M4.5 47.5 h7" stroke="#e3a82b" stroke-width="2.5" stroke-linecap="round"/>`
     : `<path d="M32 6 L39 24 L58 25 L43 37 L48 56 L32 45 L16 56 L21 37 L6 25 L25 24Z" fill="#e8dcc2" stroke="#a8917a" stroke-width="3" stroke-linejoin="round" stroke-dasharray="5 4"/>`;
