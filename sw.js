@@ -1,5 +1,5 @@
-/* Service worker: l'app funziona offline. Cache "stale-while-revalidate" sui file locali. */
-const CACHE = 'fifo-fafo-playtest-v4';
+/* Service worker: l'app funziona offline. Cache con rete per prima sui file locali. */
+const CACHE = 'fifo-fafo-playtest-v5';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './css/style.css',
   './js/data.js', './js/engine.js', './js/ai.js', './js/sim.js',
   './js/ui/sprites.js', './js/ui/common.js', './js/ui/board.js', './js/ui/play.js', './js/ui/simui.js', './js/rulebook.js', './js/ui/rules.js', './js/ui/main.js',
@@ -12,9 +12,9 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  // rete per prima (così si vedono subito gli aggiornamenti), cache come riserva offline
   e.respondWith(caches.open(CACHE).then(async (c) => {
-    const hit = await c.match(e.request);
-    const net = fetch(e.request).then((r) => { if (r.ok) c.put(e.request, r.clone()); return r; }).catch(() => hit);
-    return hit || net;
+    try { const r = await fetch(e.request, { cache: 'no-cache' }); if (r.ok) c.put(e.request, r.clone()); return r; }
+    catch (err) { const hit = await c.match(e.request); if (hit) return hit; throw err; }
   }));
 });
