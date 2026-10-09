@@ -367,3 +367,24 @@ test('regolamento (docs/REGOLAMENTO.md): punti degli obiettivi coerenti con il c
   for (const o of Object.values(FF.OBJECTIVES).filter((x) => x.kind === 'set')) check(`Il set: ${FF.RES[o.a].n} + ${FF.RES[o.b].n}`, o.pts);
   FF.ROOMS.forEach((r) => assert.ok(md.includes(r.name + ' →') || md.includes(r.name + ' /') || md.includes(r.name), r.name));
 });
+
+test('kit stampabile: conteggi, formato e niente undefined/NaN', () => {
+  const fs = require('node:fs'), path = require('node:path'), { execFileSync } = require('node:child_process');
+  const root = path.join(__dirname, '..');
+  execFileSync('node', [path.join(root, 'tools', 'build-print.js'), '--no-pdf']);
+  const rd = (f) => fs.readFileSync(path.join(root, 'stampa', f), 'utf8');
+  const fr = rd('carte-fronte-retro.html'), so = rd('carte-solo-fronti.html');
+  assert.equal((fr.match(/class="sheet"/g) || []).length, 14);
+  assert.equal((so.match(/class="sheet"/g) || []).length, 7);
+  assert.equal((so.match(/class="c"/g) || []).length, 63);
+  assert.ok(fr.includes('width: 63.5mm') && fr.includes('height: 88.9mm'));
+  ['carte-fronte-retro.html', 'carte-solo-fronti.html', 'tabellone-e-plance.html', 'foglio-punti.html'].forEach((f) => {
+    const h = rd(f); assert.ok(!h.includes('NaN') && !h.includes('undefined'), f);
+  });
+  const n = (re) => (so.match(re) || []).length;
+  assert.equal(n(/class="cd room"/g), FF.ROOMS.length);
+  assert.equal(n(/class="cd flow"/g), 20);
+  assert.equal(n(/class="cd mood"/g) + n(/class="cd mood sp"/g), 12);
+  assert.equal(n(/class="cd obj o[ab]"/g), Object.keys(FF.OBJECTIVES).length);
+  assert.equal(n(/class="cd refc"/g), 3);
+});
