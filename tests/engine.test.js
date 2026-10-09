@@ -384,7 +384,7 @@ test('kit stampabile: conteggi, formato e niente undefined/NaN', () => {
   const n = (re) => (so.match(re) || []).length;
   assert.equal(n(/class="cd room"/g), FF.ROOMS.length);
   assert.equal(n(/class="cd flow"/g), 20);
-  assert.equal(n(/class="cd mood"/g), 2);   // 2 carte di riepilogo mood
+  assert.equal(n(/class="cd mood"/g), 3);   // 3 carte di riepilogo mood
   assert.equal(n(/class="cd obj o[ab]"/g), Object.keys(FF.OBJECTIVES).length);
   assert.equal(n(/class="cd refc"/g), 3);
 });

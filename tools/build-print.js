@@ -69,13 +69,15 @@ FF.ROOMS.forEach((r) => cards.push({ g: 'Stanze (si dispongono ad anello)', b: B
 const mrow = (id, long) => { const m = FF.MOODS[id], d = m.demand === 'any' ? 'una risorsa qualsiasi' : m.demand ? `<b>${FF.RES[m.demand].n}</b>` : 'niente di preciso';
   return `<div class="mr"><span class="mc">${S.use('cat-' + id)}</span><b>${esc(m.name)}</b> <em>pretende: ${d}</em> — ${long ? `<u>Movimento</u> ${MOVE[id]} <u>Effetto</u> ${EFF[id]}` : MOVE[id]}</div>`; };
 const MCARD = (title, inner) => card('mood', `<div class="band">${title}</div>${inner}`);
-cards.push({ g: 'Riepilogo mood (si tengono scoperte)', b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 1/2 (ruota)',
-  `<div class="mx"><b>Mood con pretesa</b>: ${DEMAND_EFF}</div>${['affamato', 'assonnato', 'coccolone', 'giocherellone'].map((i) => mrow(i)).join('')}
-   <div class="mx"><b>Mood senza pretesa</b>: ${FREE_EFF}</div>${['curioso', 'neutro', 'iperattivo', 'dispettoso'].map((i) => mrow(i)).join('')}`) });
-cards.push({ g: 'Riepilogo mood (si tengono scoperte)', b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 2/2 (speciali)',
-  `${mrow('bisognoso', true)}${mrow('irrequieto', true)}
-   <div class="mr spc"><span class="mc">${S.use('cat-offesissimo')}</span><b>Offesissimo</b> <em>fuori ruota · non pretende e non accetta niente</em> — <u>Scatta</u> se non gli dai nulla (con un mood con pretesa) o se raccogli nella sua stanza, anche in un'interazione passiva. <u>Turno dopo</u>: si sposta di 1 nella direzione corrente e dà <b>−2 PF</b> a chi è nella stanza d'arrivo. Ancora dopo: <b>si calma</b> e la ruota riprende.</div>
-   <div class="mr spc"><span class="mc">${S.use('cat-arrabbiatissimo')}</span><b>Arrabbiatissimo</b> <em>fuori ruota · pretende 2 risorse qualsiasi</em> — <u>Scatta</u> quando il counter arriva a 3. Resta fermo e la ruota non avanza. Inizio Fase Heafy: <b>−1 PF</b> a chi è nella sua stanza o adiacente. Gli dai 2 risorse: <b>+2 PF</b>, si calma e <b>la ruota avanza</b>. Meno di 2: −1 PF, non perdi nulla.</div>`) });
+const SPEC = (id, nm, sub, txt) => `<div class="mr spc"><span class="mc">${S.use('cat-' + id)}</span><b>${nm}</b> <em>${sub}</em> — ${txt}</div>`;
+const RG = 'Riepilogo mood (si tengono scoperte)';
+cards.push({ g: RG, b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 1/3 (con pretesa)',
+  `<div class="mx"><b>Se gli dai qualcosa</b> (Affamato, Assonnato, Coccolone, Giocherellone): ${DEMAND_EFF}</div>${['affamato', 'assonnato', 'coccolone', 'giocherellone', 'bisognoso'].map((i) => mrow(i, i === 'bisognoso')).join('')}`) });
+cards.push({ g: RG, b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 2/3 (senza pretesa)',
+  `<div class="mx"><b>Se gli dai qualcosa</b> (Curioso, Neutro, Iperattivo, Dispettoso): ${FREE_EFF}</div>${['curioso', 'neutro', 'iperattivo', 'dispettoso'].map((i) => mrow(i)).join('')}${mrow('irrequieto', true)}`) });
+cards.push({ g: RG, b: BACKS.ref, f: MCARD('RIEPILOGO MOOD · 3/3 (fuori ruota)',
+  `${SPEC('offesissimo', 'Offesissimo', 'non pretende e non accetta niente', "<u>Scatta</u> se non gli dai nulla (con un mood con pretesa) o se raccogli nella sua stanza, anche in un'interazione passiva. Nel turno in cui scatta resta Offesissimo. <u>Turno dopo</u>: si sposta di 1 nella direzione corrente e dà <b>−2 PF</b> a chi è nella stanza d'arrivo. <u>Turno ancora dopo</u>: <b>si calma</b> e la ruota riprende da dov'era.")}
+   ${SPEC('arrabbiatissimo', 'Arrabbiatissimo', 'pretende 2 risorse qualsiasi', '<u>Scatta</u> quando il counter arriva a 3. Non cambia mood e resta fermo. Inizio di ogni Fase Heafy: <b>−1 PF</b> a chi è nella sua stanza o in una adiacente. Chi gli dà 2 risorse: <b>+2 PF</b>, lo calma e <b>la ruota avanza</b> (il mood successivo vale subito per il resto del turno). Chi non riesce a darne 2: −1 PF e non perde nulla.')}`) });
 
 for (const id of FF.OBJECTIVE_IDS) { const o = FF.OBJECTIVES[id];
   const art = o.kind === 'angolo' ? S.use('room-' + o.room) : o.kind === 'compagno' ? `<span class="two">${S.use('pawn-0')}${S.use('cat-coccolone')}</span>`
@@ -138,8 +140,8 @@ const CSS_CARDS = `
 .mood .lab { align-self: stretch; text-align: left; font-size: 6.3pt; font-weight: 800; letter-spacing: .6pt; color: #a8480f; margin-top: 1.7mm; border-bottom: .2mm solid #c9a46a; }
 .mood .dm { display: flex; align-items: center; gap: 1.6mm; font-size: 8.6pt; margin-top: .8mm; text-align: left; align-self: stretch; } .mood .dm .sp { width: 8mm; height: 8mm; flex: none; }
 .mood p { text-align: left; align-self: stretch; margin-top: .8mm; font-size: 7.2pt; line-height: 1.24; } .mood.sp { background: #ffe1d6; }
-.mood { padding: 2.4mm 3mm 2mm; } .mood .band { background: #8f2f2f; margin-top: .6mm; } .mx { align-self: stretch; text-align: left; font-size: 6pt; line-height: 1.2; margin-top: 1.2mm; color: #3b2410; background: #f1e1b8; border-radius: 1mm; padding: .6mm 1.2mm; }
-.mr, .mx { flex: none; } .mr { align-self: stretch; text-align: left; margin-top: 1.1mm; position: relative; padding-left: 5.6mm; font-size: 5.9pt; line-height: 1.15; min-height: 5mm; } .mr.spc { background: #ffe1d6; border-radius: 1mm; padding: .4mm 1mm .4mm 6.4mm; } .mr b { font-size: 6.5pt; } .mr em { font-style: normal; color: #a8480f; } .mc { position: absolute; left: 0; top: 0; width: 5mm; height: 5mm; } .mr.spc .mc { left: .8mm; top: .4mm; } .mc svg { width: 100%; height: 100%; display: block; } .mr u { text-decoration: none; font-weight: 800; color: #a8480f; }
+.mood { padding: 2.4mm 3mm 2mm; } .mood .band { background: #8f2f2f; margin-top: .6mm; } .mx { align-self: stretch; text-align: left; font-size: 6.9pt; line-height: 1.2; margin-top: 1.2mm; color: #3b2410; background: #f1e1b8; border-radius: 1mm; padding: .6mm 1.2mm; }
+.mr, .mx { flex: none; } .mr { align-self: stretch; text-align: left; margin-top: 1.1mm; position: relative; padding-left: 7mm; font-size: 6.8pt; line-height: 1.18; min-height: 5mm; } .mr.spc { background: #ffe1d6; border-radius: 1mm; padding: 1mm 1.2mm 1mm 8mm; margin-top: 2.5mm; } .mr b { font-size: 7.8pt; } .mr em { font-style: normal; color: #a8480f; } .mc { position: absolute; left: 0; top: 0; width: 6mm; height: 6mm; } .mr.spc .mc { left: 1mm; top: 1mm; width: 6.4mm; height: 6.4mm; } .mc svg { width: 100%; height: 100%; display: block; } .mr u { text-decoration: none; font-weight: 800; color: #a8480f; }
 .obj .band { background: #5a3a22; } .obj.ob .band { background: #6b3f93; } .obj .art { width: 100%; height: 30mm; margin-top: 1.8mm; display: flex; align-items: center; justify-content: center; border-radius: 2mm; overflow: hidden; background: #efdcb4; border: .4mm solid #3b2410; }
 .obj .art > svg { width: 100%; height: 100%; } .obj .art .two { display: flex; align-items: center; justify-content: center; gap: 2mm; height: 100%; } .obj .art .two svg { width: 15mm; height: 22mm; }
 .obj .art .two svg[viewBox="0 0 48 48"] { width: 18mm; height: 18mm; } .obj .art .two svg[viewBox="0 0 64 64"] { width: 22mm; height: 22mm; } .obj .art .two svg[viewBox="-4 -4 108 108"] { width: 22mm; height: 22mm; }
@@ -174,7 +176,7 @@ function tabellone() {
   return page([
     spot(rowX(4, 0), y, 'OBIETTIVI · POSIZIONE', 'mazzo coperto<br>(10 carte)'),
     spot(rowX(4, 1), y, 'OBIETTIVI · MANO E STILE', 'mazzo coperto<br>(9 carte)'),
-    spot(rowX(4, 2), y, 'RIEPILOGO MOOD', 'le 2 carte di riepilogo dei mood, scoperte<br>(la ruota è nella pagina dopo)'),
+    spot(rowX(4, 2), y, 'RIEPILOGO MOOD', 'le 3 carte di riepilogo dei mood, scoperte<br>(la ruota è nella pagina dopo)'),
     spot(rowX(4, 3), y, 'RISERVA RISORSE', 'i gettoni Snack, Cuscino, Giochino, Paletta, Coccola'),
   ].join(''), 'FIFO FAFO · tabellone · stampa su A4 orizzontale · la ruota dei mood è la pagina 2, le 9 carte Stanza si dispongono ad anello (pagina 3)');
 }
@@ -192,9 +194,9 @@ function ruota() {
   });
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#3b2410" stroke-width="1.4"/><circle cx="${cx}" cy="${cy}" r="${R0}" fill="#fff" stroke="#3b2410" stroke-width="1.2"/>`;
   return page(`<svg class="wsvg" viewBox="0 0 297 210">${svg}</svg>${html}
-    <div class="wh" style="left:${cx}mm;top:${cy}mm"><b>RUOTA DEL MOOD</b><span>Segnalino sul <b>mood attuale</b>. Il <b>prossimo</b> è il settore dopo, in senso orario ↻. Dopo il 10 si torna all'1.</span>
+    <div class="wdir"><b>DIREZIONE DI HEAFY</b><i>movimento tra le stanze, non è il verso della ruota. Si inizia in senso orario; il segnalino si gira quando la direzione si inverte.</i><div><u>↻<small>ORARIO</small></u><u>↺<small>ANTIORARIO</small></u></div></div><div class="wh" style="left:${cx}mm;top:${cy}mm"><b>RUOTA DEL MOOD</b><span>Segnalino sul <b>mood attuale</b>. Il <b>prossimo</b> è il settore con il numero successivo; dopo il 10 si torna all'1.</span>
     <div class="wx"><b>OFFESISSIMO</b><i>2° segnalino qui</i></div><div class="wx"><b>ARRABBIATISSIMO</b><i>2° segnalino qui</i></div></div>`,
-  'FIFO FAFO · ruota del mood · A4 orizzontale · dettagli di ogni mood sulle 2 carte di riepilogo');
+  'FIFO FAFO · ruota del mood · A4 orizzontale · dettagli di ogni mood sulle 3 carte di riepilogo');
 }
 function tracciati() {
   const turn = (n) => `<u class="tb">${n}</u>`;
@@ -247,6 +249,7 @@ const CSS_LAND = `
 .ws { position: absolute; width: 33mm; transform: translate(-50%, -50%); text-align: center; font-size: 8.4pt; line-height: 1.15; } .ws .wc { width: 19mm; height: 19mm; margin: 0 auto 0.6mm; } .ws .wn { position: absolute; left: 1mm; top: -2mm; font-weight: 900; font-size: 10pt; color: #a8480f; }
 .ws .wd { display: flex; align-items: center; justify-content: center; gap: 1.2mm; font-size: 7.4pt; margin-top: .8mm; min-height: 6.5mm; } .ws .wr { width: 6.5mm; height: 6.5mm; flex: none; display: block; }
 .wh { position: absolute; width: 66mm; transform: translate(-50%, -50%); text-align: center; font-size: 7.4pt; line-height: 1.25; } .wh > b { font-size: 10.5pt; display: block; } .wh > span { display: block; margin: 1.5mm 0 2.5mm; }
+.wdir { position: absolute; left: 5mm; top: 6mm; width: 46mm; border: .5mm solid #555; border-radius: 3mm; padding: 2mm 2.5mm; background: #fafafa; font-size: 8pt; } .wdir i { display: block; font-style: normal; font-size: 6.4pt; color: #444; line-height: 1.25; margin: 1mm 0 1.5mm; } .wdir div { display: flex; gap: 2mm; } .wdir u { text-decoration: none; flex: 1; border: .5mm solid #555; border-radius: 2mm; text-align: center; font-size: 20pt; font-weight: 900; line-height: 1.1; padding: 1mm 0; background: #fff; } .wdir small { display: block; font-size: 5.6pt; }
 .wx { border: .5mm dashed #777; border-radius: 2.5mm; padding: 1.2mm 0; margin-top: 1.6mm; } .wx b { display: block; font-size: 8pt; } .wx i { font-size: 6.6pt; color: #555; font-style: normal; }
 @media print { html, body { background: none; } .land { margin: 0; } .noprint { display: none; } }
 .noprint { position: fixed; top: 6px; right: 6px; z-index: 9; font: 700 14px sans-serif; } .noprint button { padding: 8px 14px; font: inherit; border: 2px solid #333; border-radius: 8px; background: #ffd54a; cursor: pointer; }`;
