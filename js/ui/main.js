@@ -11,6 +11,8 @@
     if (where === 'home') { UI.screen('home'); renderResume(); }
     else if (where === 'sim') UI.openSim();
     else if (where === 'rules') UI.openRules();
+    else if (where === 'net-host') UI.netHost();
+    else if (where === 'net-join') UI.netJoin();
     else UI.openSetup(where);
   };
 
@@ -35,6 +37,8 @@
     $('#btn-rules').onclick = () => UI.go('rules');
     document.querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => UI.go(b.dataset.mode)));
     renderResume();
+    const jc = new URLSearchParams(location.search).get('join');
+    if (jc) UI.netJoin(jc);
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 })(typeof window !== 'undefined' ? window : globalThis);

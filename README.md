@@ -7,6 +7,7 @@ Nessuna build: apri `index.html` (o `npm run serve` → http://localhost:8080). 
 - 🤖 **Contro l'AI** — facile / media / difficile; suggerimento AI, anteprima del Flow, salvataggio automatico.
 - 👥 **Due giocatori** — stesso dispositivo, schermata di passaggio per tenere segreto il Flow.
 - 🍿 **AI contro AI** — guarda la partita: passo-passo, lento, normale, veloce, istantaneo.
+- 📡 **Partita in rete (2 dispositivi)** — «Crea una stanza» (codice di 4 caratteri + link) e «Unisciti a una stanza»; ognuno ha il proprio schermo, senza account né server tuoi. Vedi sotto.
 - 📊 **Simulazione veloce** — centinaia di partite in pochi secondi: vittorie con intervallo di confidenza, vantaggio di posto (G1/G2),
   andamento dei punti, resa di ogni mood, eventi medi, elenco partite con log completo e "Rivedi"; esporta report `.md`, `.csv`, `.json`.
   **Esperimento sulle regole**: confronta più valori di un parametro (es. limite mano 2/3/4).
@@ -25,9 +26,18 @@ A inizio partita ognuno pesca 4 obiettivi e ne tiene 2; si rivelano e si control
 Plancia 2D illustrata (le 9 stanze sono disegnate e si dispongono ad anello a caso), Heafy con un'espressione diversa per ogni mood, pedine, gettoni risorsa e carte da gioco: tutti sprite SVG disegnati nel codice (`js/ui/sprites.js`).
 `node tools/export-sprites.js` li esporta come file in `assets/sprites/*.svg` (riutilizzabili, ad es. in Godot) e genera la galleria `sprites.html`.
 
+## Partita in rete (due dispositivi)
+- Collegamento diretto **WebRTC con PeerJS** (`js/vendor/peerjs.min.js`, salvato nel repo: nessun CDN). Il servizio pubblico di PeerJS serve solo a far trovare i due dispositivi (serve internet all'inizio); poi i dati passano direttamente. Per i test: `?peerhost=localhost&peerport=9000` usa un server locale.
+- **Il dispositivo che crea la stanza è il tavolo** (`FF.Net.Runner`, `js/netgame.js`): tiene lo stato vero e fa girare le regole. Ognuno dei due giocatori — anche quello sul tavolo — ha la propria schermata (`js/ui/netplay.js`) e va avanti con i propri tempi: nessuno blocca l'altro.
+- **Vista filtrata**: all'altro giocatore non arrivano mai il seed (da cui si ricostruirebbero le scelte casuali), gli obiettivi segreti dell'avversario (fino a fine partita) né il suo Flow prima della rivelazione. Le scelte private (Flow, obiettivi) viaggiano solo da chi le fa al tavolo.
+- **Caduta e rientro**: battito ogni 4 s, dispositivo perso dopo ~12 s. Il tavolo mostra «Aspetto che torni» / «Gioca l'AI al posto suo»; chi rientra con lo stesso nome riprende da dove era, con la scelta ancora pendente. L'app chiede di tenere lo schermo acceso (Screen Wake Lock) dove supportato.
+- Messaggi in **JSON puro** e piccoli (PeerJS non regge messaggi sopra ~16 KB: il log si manda a pezzi): lo controllano i test in `tests/net.test.js`.
+- **Limiti**: la partita in rete non si salva (se il tavolo chiude l'app, finisce); non provato su iPad/telefoni veri né col servizio pubblico di PeerJS (solo con server locale); su wifi che isolano i dispositivi il collegamento diretto può non partire.
+- Prova nel browser (due contesti Chromium + server PeerJS locale): `NODE_PATH=<cartella con npm i peer>/node_modules node tools/e2e-net.js [--drop]`.
+
 ## Da riga di comando
 ```
-npm test                                   # 25 test sulle regole
+npm test                                   # test sulle regole e sulla rete
 node tools/sim.js --games 500 --a hard --b medium --out report.md
 node tools/sim.js --games 300 --rule handLimit=3 --log 2
 ```
@@ -39,7 +49,8 @@ node tools/sim.js --games 300 --rule handLimit=3 --log 2
 | `js/engine.js` | motore: partita come generatore di decisioni, RNG con seed, stato JSON clonabile |
 | `js/ai.js` | AI: euristiche + simulazione in avanti sul motore stesso (clone dello stato) |
 | `js/sim.js` | simulazioni in blocco, statistiche, report |
-| `js/ui/*` | interfaccia (plancia, partita, simulazione, regole) |
+| `js/netgame.js` | partita in rete: tavolo (`Runner`), vista filtrata, messaggi |
+| `js/ui/*` | interfaccia (plancia, partita, simulazione, regole; `net.js` collegamento PeerJS, `netplay.js` schermata in rete, `lobby.js` stanza) |
 
 Il regolamento completo (fonte unica, mostrato anche nell'app alla voce 📖 Regole) è in `docs/REGOLAMENTO.md`: dopo ogni modifica lancia `node tools/build-rules.js`.
 Regolamento originale: repo *Fifo Fafo*; versione precedente: *Fifo Fafo Digital Version*.

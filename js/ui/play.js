@@ -228,7 +228,7 @@
       const g = this.game, s = g.s;
       if (!g.rules.objectives || !s.objectives[0].length) { box.innerHTML = '<div class="muted small">Nessun obiettivo in questa partita.</div>'; return; }
       const card = (pid) => s.objectives[pid].map((id) => UI.objCard(id, FF.OBJECTIVES[id].kind === 'primoSera' && s.eveningFirst == null ? null : g.objectiveDone(pid, id) ? 'ok' : 'ko')).join('');
-      if (this.mode === 'ai') {
+      if (this.mode === 'ai' || this.mode === 'net') {
         const me = this.humanSeats[0];
         box.innerHTML = `<div class="small muted" style="margin-bottom:6px">Solo tu li vedi. Si rivelano a fine partita: ✔ = punti, ✘ = +1 Rancore. Lo stato è quello di adesso: conta quello dell'ultimo turno.</div>${card(me)}`;
       } else if (this.mode === 'watch') {
@@ -595,14 +595,14 @@
         <div class="scoreline">${[0, 1].map((i) => `<div><div class="sc ${r.winner === i ? 'win' : ''}">${r.scores[i]}</div><div class="small muted">${nm(i)}<br>${r.pf[i]} PF − ${r.rancor[i]} rancori${r.objPts && r.objPts[i] ? ' + ' + r.objPts[i] + ' obiettivi' : ''}</div></div>`).join('')}</div>
         ${r.objs && r.objs.some((l) => l.length) ? `<div class="lbl" style="text-align:left">🎯 Obiettivi segreti rivelati</div><div class="row2" style="text-align:left;margin-bottom:12px">${[0, 1].map((i) => `<div><div class="lbl">${FF.PLAYER_ICONS[i]} ${nm(i)} · ${r.objPts[i] ? '+' + r.objPts[i] : '0'} PF</div>${r.objs[i].map((o) => UI.objCard(o.id, o.ok ? 'ok' : 'ko', true)).join('')}</div>`).join('')}</div>` : ''}
         <details style="text-align:left;margin-bottom:12px"><summary class="small" style="cursor:pointer;color:var(--accent)">Da dove sono arrivati i punti</summary><div class="row2" style="margin-top:8px">${breakdown}</div></details>
-        <div style="display:grid;gap:8px"><button class="btn primary" data-a="again">↺ Nuova partita</button>
+        <div style="display:grid;gap:8px"><button class="btn primary" data-a="again">${c.mode === 'net' ? '🏠 Torna al menu (per ricominciare, crea una nuova stanza)' : '↺ Nuova partita'}</button>
         <button class="btn" data-a="log">📄 Esporta log</button><button class="btn" data-a="seed">🌱 Copia seed (${esc(c.seed)})</button><button class="btn" data-a="home">🏠 Menu principale</button></div>`, { left: false, dismiss: false, wide: true });
       dlg.el.addEventListener('click', (e) => {
         const a = e.target.dataset.a; if (!a) return;
         if (a === 'log') UI.download(`fifo-fafo-${c.seed}.txt`, this.logText());
         else if (a === 'seed') UI.copy(c.seed);
         else if (a === 'home') { dlg.close(); UI.go('home'); }
-        else if (a === 'again') { dlg.close(); UI.openSetup(c.mode); }
+        else if (a === 'again') { dlg.close(); UI.go(c.mode === 'net' ? 'home' : c.mode); }
       });
     }
   }
