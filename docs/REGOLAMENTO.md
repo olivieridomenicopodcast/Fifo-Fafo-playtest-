@@ -54,10 +54,10 @@ Chi parte per primo, in ogni turno, esegue il proprio Flow per primo.
 Quando arriva la carta J2 nel tuo Flow scegli, **una alla volta e nell'ordine che vuoi**, tra queste azioni. Ognuna si usa al massimo una volta per Jolly:
 - **Spostamento**: 1 o 2 stanze, nel senso che vuoi.
 - **Raccolta sicura**: prendi 1 risorsa nella stanza in cui sei, anche con Heafy presente, senza farlo arrabbiare.
-- **Prendi Heafy**: lo porti con te. Scegli tu se fargli portare anche una risorsa della stanza. Non può essere l'ultima azione del Jolly: dopo averlo preso devi spostarti o depositarlo. Per sapere se si può, devi essere nella sua stanza (l'app mostra l'azione sempre, grigia se non disponibile).
+- **Prendi Heafy**: lo porti con te. Scegli tu se fargli portare anche una risorsa della stanza. **Puoi finire il Jolly tenendolo in braccio [nuovo]**: così l'avversario non può interagire con lui (vedi sotto). **Se però lo sposti col Jolly** (ti muovi mentre lo hai in braccio) **sei obbligato a depositarlo [nuovo]**: dopo lo spostamento con Heafy l'unico modo di finire è «Deposita Heafy». Per sapere se si può prendere, devi essere nella sua stanza (l'app mostra l'azione sempre, grigia se non disponibile).
 - **Deposita Heafy**: lo lasci dove sei (rilascia la risorsa che portava).
 
-**Heafy in braccio [chiarito]**: se a fine Flow lo hai ancora in braccio, l'avversario non può interagire con lui. Torna libero all'inizio della Fase Heafy del turno dopo, nella stanza dove sei.
+**Heafy in braccio [chiarito]**: se a fine Flow lo hai ancora in braccio (preso e non spostato), l'avversario non può interagire con lui: resta indisponibile finché non tocca di nuovo a te. Torna libero (lo metti giù) all'inizio della Fase Heafy del turno dopo, nella stanza dove sei.
 
 ## 6. Interazione con Heafy
 Dai **1 risorsa** (2 se è Arrabbiatissimo). Gli effetti dipendono dalla **pretesa** del mood, cioè la risorsa *specifica* che Heafy vuole:
@@ -134,5 +134,5 @@ La mossa "Soffio" (sabotaggio leggero, 1 volta per partita) resta da valutare.
 | Offesissimo | Colpisce se scatta durante le carte | Colpisce sempre al turno dopo, comunque scatti |
 | Coccolone | +1 PF per chi si ferma da lui | Tolto |
 | Arrabbiatissimo | Resta finché non è soddisfatto | Quando si calma la ruota avanza |
-| Trasporto J2 | "Se A prima di J devi depositare" | Non serve: Heafy torna libero a inizio turno dopo |
+| Trasporto J2 | "Se A prima di J devi depositare" | Puoi finire il Jolly con Heafy in braccio (torna libero a inizio turno dopo); se lo sposti col Jolly devi depositarlo |
 | Obiettivi segreti | Da definire | Vedi §9 |

@@ -536,11 +536,12 @@
         else if (h.carriedBy === p.id) pickWhy = 'Heafy è già in braccio a te';
         else if (h.carriedBy != null) pickWhy = 'Heafy è in braccio all\'avversario';
         else if (h.pos !== p.pos) pickWhy = `Heafy è in ${g.rname(h.pos)}: devi essere nella sua stanza. Usa prima lo spostamento per raggiungerlo!`;
-        const pickS = sec('🐱 Prendi Heafy (lo porti con te)', of('pickup').length ? of('pickup').map(btn).join('') : off('🐱 Prendi Heafy — non disponibile', pickWhy), 'Non può essere l\'ultima azione del Jolly: dopo averlo preso devi spostarti o depositarlo. Torna libero all\'inizio del turno dopo.');
+        const pickS = sec('🐱 Prendi Heafy (lo porti con te)', of('pickup').length ? of('pickup').map(btn).join('') : off('🐱 Prendi Heafy — non disponibile', pickWhy), 'Puoi finire il Jolly tenendolo in braccio: l\'avversario non può interagire con lui e Heafy torna libero all\'inizio del turno dopo. Se lo sposti col Jolly (ti muovi con lui in braccio) devi poi depositarlo.');
         const depS = sec('📍 Deposita Heafy', of('deposit').length ? of('deposit').map(btn).join('') : off('📍 Deposita Heafy — non disponibile', done.deposit ? 'già fatto' : 'non hai Heafy in braccio'));
         this.setAction(`<h3>✨ Jolly J2 — scegli un'azione (cariche rimaste dopo questa: ${p.j2})</h3>
           <div class="small muted" style="margin-bottom:6px">📍 Sei in ${esc(g.rname(p.pos))} · 🐱 Heafy è in ${esc(g.rname(h.pos))}${h.carriedBy === p.id ? ' (in braccio a te)' : ''}. Ogni azione si usa una sola volta, nell'ordine che vuoi; quando hai finito premi “Ho finito”.</div>
           ${pickS}${moveS}${colS}${depS}
+          ${d.done && d.done.mustDeposit ? '<div class="warnbox">📍 Hai spostato Heafy col Jolly: ora devi <b>depositarlo</b> (usa «Deposita Heafy»).</div>' : ''}
           <div class="btn-row"><button class="btn primary" id="j-done" ${d.canFinish ? '' : 'disabled'}>✔ Ho finito</button></div>`);
         $$('#g-action [data-i]').forEach((b) => {
           b.onclick = () => { this.targets = null; resolve(d.options[Number(b.dataset.i)]); };

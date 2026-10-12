@@ -39,7 +39,7 @@ const FLOW = {
   A3: ['MOVIMENTO', 'Ti muovi di <b>1 stanza</b> in senso <b>antiorario ↺</b>.'], A4: ['MOVIMENTO', 'Ti muovi di <b>2 stanze</b> in senso <b>antiorario ↺</b>.'],
   B1: ['RACCOLTA', '<b>Raccogli</b> 1 risorsa nella stanza in cui sei quando esegui la carta (max 2 in mano). Se Heafy è lì: −1 PF e Offesissimo.'], B2: ['RACCOLTA', 'Non raccogli.'],
   C1: ['INTERAZIONE', '<b>Interagisci</b> con Heafy: devi essere nella sua stanza. Se non c\'è, abbandoni 1 risorsa nella stanza.'], C2: ['INTERAZIONE', 'Non interagisci.'],
-  J1: ['JOLLY', 'Nessun effetto.'], J2: ['JOLLY', '<b>Jolly</b> (solo 2 volte a partita). Una volta ciascuna e in ordine libero: spostamento 1–2 · raccolta sicura · prendi Heafy · deposita Heafy.'],
+  J1: ['JOLLY', 'Nessun effetto.'], J2: ['JOLLY', '<b>Jolly</b> (solo 2 volte a partita). Una volta ciascuna e in ordine libero: spostamento 1–2 · raccolta sicura · prendi Heafy · deposita Heafy. Puoi finire con Heafy in braccio; se lo sposti, devi depositarlo.'],
 };
 const FLOWCOL = { A: '#d23a2a', B: '#8a5a1a', C: '#3a9a3a', J: '#d9a514' };
 

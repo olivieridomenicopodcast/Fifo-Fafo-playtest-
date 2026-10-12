@@ -113,6 +113,7 @@
     const wantC = d.rest.includes('C1') && !p.interacted;
     const wantB = d.rest.includes('B1');
     const moves = d.options.filter((o) => o.k === 'move');
+    if (d.done.mustDeposit) return d.options.find((o) => o.k === 'deposit') || d.options[0];   // ha spostato Heafy: deve lasciarlo
     if (!d.done.move && wantC && p.pos !== h.pos) {
       const m = moves.find((o) => FF.mod(p.pos + o.dir * o.steps) === h.pos);
       if (m && (p.hand.length || s.special)) return m;
@@ -220,15 +221,15 @@
       if (v > bestScore) { bestScore = v; bestSeq = seq; }
     }
     (function dfs(g, done, last, seq, depth) {
-      const { options, canFinish } = g.j2Options(pid, done, last === 'pickup');
+      const { options, canFinish } = g.j2Options(pid, done);
       if (canFinish) finish(g, seq);
       if (depth >= 4) return;
       for (const a of options) {
-        const g2 = g.clone();
+        const g2 = g.clone(), nd = g.j2Done(pid, done, a);
         g2.j2Apply(pid, a);
-        dfs(g2, { ...done, [a.k]: true }, a.k, seq.concat([a]), depth + 1);
+        dfs(g2, nd, a.k, seq.concat([a]), depth + 1);
       }
-    })(game.clone(), { move: false, collect: false, pickup: false, deposit: false }, null, [], 0);
+    })(game.clone(), { move: false, collect: false, pickup: false, deposit: false, mustDeposit: false }, null, [], 0);
     return bestSeq;
   }
 
@@ -282,6 +283,7 @@
           case 'flow': plan = null; return chooseFlow(game, d);
           case 'objectives': return chooseObjectives(game, d.offer, d.keep, rng, level === 'easy');
           case 'j2step':
+            if (level === 'easy' && d.done.mustDeposit) return d.options.find((o) => o.k === 'deposit') || d.options[0];
             if (level === 'easy') return d.canFinish && rng() < 0.5 ? { k: 'done' } : d.options[Math.floor(rng() * d.options.length)];
             if (level === 'hard') {
               if (!plan) plan = bestJ2Plan(game, d, rng);

@@ -617,7 +617,8 @@
     }
 
     // ───────────────────────── Jolly (J2) ─────────────────────────
-    j2Options(pid, done, lastPickup) {
+    // `done.mustDeposit`: hai spostato Heafy col Jolly (era in braccio e ti sei mosso): devi lasciarlo prima di finire
+    j2Options(pid, done) {
       const s = this.s, p = s.players[pid], h = s.heafy;
       const o = [];
       if (!done.move) for (const dir of [1, -1]) for (const steps of [1, 2]) o.push({ k: 'move', dir, steps });
@@ -629,7 +630,14 @@
         for (const r of rs) o.push({ k: 'pickup', carry: r });
       }
       if (!done.deposit && h.carriedBy === pid) o.push({ k: 'deposit' });
-      return { options: o, canFinish: !lastPickup };
+      return { options: o, canFinish: !done.mustDeposit };
+    }
+    // stato delle azioni dopo aver fatto `a` (da chiamare PRIMA di j2Apply: serve sapere se Heafy era in braccio)
+    j2Done(pid, done, a) {
+      const nd = { ...done, [a.k]: true };
+      if (a.k === 'move' && this.s.heafy.carriedBy === pid) nd.mustDeposit = true;
+      if (a.k === 'deposit') nd.mustDeposit = false;
+      return nd;
     }
 
     // applica una singola azione del Jolly; ritorna un eventuale beat
@@ -663,19 +671,19 @@
       p.j2--;
       this.stat('j2_usate', pid);
       let b = this.say('act', `J2 ✨ ${this.pn(pid)} attiva il Jolly (cariche rimaste: ${p.j2})`, pid); if (b) yield b;
-      const done = { move: false, collect: false, pickup: false, deposit: false };
-      let last = null;
+      let done = { move: false, collect: false, pickup: false, deposit: false, mustDeposit: false };
       for (let guard = 0; guard < 8; guard++) {
-        const { options, canFinish } = this.j2Options(pid, done, last === 'pickup');
+        const { options, canFinish } = this.j2Options(pid, done);
         if (!options.length) break;
         const ans = yield* this.ask({ type: 'j2step', player: pid, options, canFinish, rest, done: { ...done } });
         if (ans == null || ans.k === 'done') { if (canFinish) break; }
         let a = options.find((x) => ans && x.k === ans.k && x.dir === ans.dir && x.steps === ans.steps && x.res === ans.res && x.carry === ans.carry);
-        if (!a) { if (canFinish) break; a = options[0]; }
-        done[a.k] = true; last = a.k;
+        if (!a) { if (canFinish) break; a = options.find((x) => x.k === 'deposit') || options[0]; }
+        done = this.j2Done(pid, done, a);
         b = this.j2Apply(pid, a);
         if (b) yield b;
       }
+      if (done.mustDeposit && h.carriedBy === pid) { b = this.j2Apply(pid, { k: 'deposit' }); if (b) yield b; }   // sicurezza: chi sposta Heafy col Jolly lo lascia sempre
     }
 
     // ───────────────────────── fine turno ─────────────────────────

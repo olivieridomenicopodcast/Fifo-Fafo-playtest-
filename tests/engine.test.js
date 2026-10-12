@@ -217,15 +217,46 @@ test('Coccolone: nessun bonus per fermarsi (solo come variante coccolonePF)', ()
   assert.equal(g.s.players[0].pf, 1);
 });
 
-test('J2: spostamento, trasporto di Heafy con risorsa, non può finire con "prendi"', () => {
+test('J2: si può finire il Jolly tenendo Heafy in braccio (indisponibile per l\'avversario fino al turno dopo)', () => {
   const g = mk(); clearRooms(g);
   const p = g.s.players[0]; p.pos = 2; g.s.heafy.pos = 2; g.s.res[2] = ['snack'];
-  // un "done" subito dopo "prendi Heafy" è illegale: il motore impone un'altra azione
-  run(g, g.jolly(0, []), [{ k: 'pickup', carry: 'snack' }, { k: 'done' }, { k: 'done' }]);
-  assert.equal(g.s.heafy.carriedBy, 0); assert.equal(g.s.heafy.pos, 3); assert.equal(p.pos, 3); assert.equal(g.s.heafy.carry, 'snack');
+  run(g, g.jolly(0, []), [{ k: 'pickup', carry: 'snack' }, { k: 'done' }]);   // preso e basta: "done" è legale
+  assert.equal(g.s.heafy.carriedBy, 0); assert.equal(g.s.heafy.pos, 2); assert.equal(g.s.heafy.carry, 'snack');
+  // l'avversario non può interagire con lui
+  assert.equal(g.s.players[1].pf, 0);
   // all'inizio del turno dopo Heafy torna libero e rilascia la risorsa nella stanza
   g.s.turn = 2; run(g, g.heafyPhase(), () => []);
-  assert.equal(g.s.heafy.carriedBy, null);
+  assert.equal(g.s.heafy.carriedBy, null); assert.deepEqual(g.s.res[2], ['snack']);
+});
+
+test('J2: se sposti Heafy col Jolly sei obbligato a depositarlo', () => {
+  const g = mk(); clearRooms(g);
+  const p = g.s.players[0]; p.pos = 2; g.s.heafy.pos = 2; g.s.res[2] = ['snack'];
+  // prendi, ti sposti con lui, provi a finire: il motore non lo permette e impone il deposito
+  run(g, g.jolly(0, []), [{ k: 'pickup', carry: 'snack' }, { k: 'move', dir: 1, steps: 1 }, { k: 'done' }, { k: 'done' }]);
+  assert.equal(g.s.heafy.carriedBy, null, 'Heafy deve essere stato lasciato');
+  assert.equal(g.s.heafy.pos, 3); assert.equal(p.pos, 3);
+});
+
+test('J2: j2Options — dopo aver spostato Heafy non si può finire; dopo il deposito sì', () => {
+  const g = mk(); clearRooms(g);
+  const p = g.s.players[0]; p.pos = 2; g.s.heafy.pos = 2;
+  let done = { move: false, collect: false, pickup: false, deposit: false, mustDeposit: false };
+  done = g.j2Done(0, done, { k: 'pickup', carry: null }); g.j2Apply(0, { k: 'pickup', carry: null });
+  assert.equal(g.j2Options(0, done).canFinish, true, 'preso e fermo: si può finire');
+  const mv = { k: 'move', dir: 1, steps: 1 };
+  done = g.j2Done(0, done, mv); g.j2Apply(0, mv);
+  assert.equal(done.mustDeposit, true);
+  assert.equal(g.j2Options(0, done).canFinish, false);
+  assert.ok(g.j2Options(0, done).options.some((o) => o.k === 'deposit'));
+  done = g.j2Done(0, done, { k: 'deposit' }); g.j2Apply(0, { k: 'deposit' });
+  assert.equal(g.j2Options(0, done).canFinish, true);
+  // spostarsi PRIMA di prendere Heafy non obbliga a niente
+  const g2 = mk(); clearRooms(g2); g2.s.players[0].pos = 2; g2.s.heafy.pos = 3;
+  let d2 = { move: false, collect: false, pickup: false, deposit: false, mustDeposit: false };
+  d2 = g2.j2Done(0, d2, { k: 'move', dir: 1, steps: 1 }); g2.j2Apply(0, { k: 'move', dir: 1, steps: 1 });
+  d2 = g2.j2Done(0, d2, { k: 'pickup', carry: null }); g2.j2Apply(0, { k: 'pickup', carry: null });
+  assert.equal(d2.mustDeposit, false); assert.equal(g2.j2Options(0, d2).canFinish, true);
 });
 
 test('C1 dell\'avversario fallisce se Heafy è in braccio al rivale', () => {
