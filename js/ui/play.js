@@ -577,7 +577,7 @@
         if (a === 'log') UI.download(`fifo-fafo-${this.cfg.seed}.txt`, this.logText());
         else if (a === 'copy') UI.copy(this.logText());
         else if (a === 'seed') UI.copy(this.cfg.seed);
-        else if (a === 'quit') { if (confirm('Abbandonare la partita?')) { dlg.close(); this.dispose(); UI.store.del('save'); UI.go('home'); return; } }
+        else if (a === 'quit') { if (confirm('Abbandonare la partita?' + (this.mode === 'net' ? ' (in rete: la partita salvata verrà eliminata)' : ''))) { dlg.close(); this.dispose(); UI.store.del('save'); if (this.mode === 'net') UI.store.del('net_save'); UI.go('home'); return; } }
         if (a === 'close') dlg.close();
       });
     }

@@ -122,3 +122,42 @@ test('rete: il rientro a partita avanzata manda il log a pezzi piccoli (PeerJS n
   assert.equal(got.filter((m) => m.t === 'log').reduce((n, m) => n + m.evs.length, 0), runner.game.events.length);
   runner.stop(); await p;
 });
+
+test('rete: salvataggio e ripresa — da seed e risposte si ritrova lo stesso stato e la stessa scelta pendente', async () => {
+  const players = [{ name: 'Ada', kind: 'human' }, { name: 'Bea', kind: 'human' }];
+  const A = new Net.Runner({ seed: 'rete-save', players });
+  const saves = [];
+  A.onSave = (h) => saves.push(h);
+  const outA = [], outB = [];
+  A.attach(0, { send: (m) => outA.push(m), online: () => true }); A.attach(1, { send: (m) => outB.push(m), online: () => true });
+  const ai = [FF.AI.create('medium', 's0'), FF.AI.create('medium', 's1')];
+  const pa = A.run();
+  // gioca fino a metà partita, poi il "tavolo si chiude"
+  for (let i = 0; i < 200000 && !(saves.length >= 40 && (A.pending[0] || A.pending[1])); i++) {
+    for (const sd of [0, 1]) { const pd = A.pending[sd]; if (pd && saves.length < 40) A.answer(sd, pd.id, ai[sd].decide(A.game, pd.d)); }
+    await new Promise((r) => setImmediate(r));
+  }
+  assert.ok(saves.length >= 40, 'serve una partita a metà');
+  const pend = A.pending.findIndex((x) => x); assert.ok(pend >= 0);
+  const stateA = JSON.stringify(A.game.s), decA = JSON.stringify(A.pending[pend].d), hist = saves[saves.length - 1].slice();
+  A.stop(); await pa;
+  // si riapre da quello che era stato salvato (JSON come in localStorage)
+  const B = new Net.Runner({ seed: 'rete-save', players, replay: JSON.parse(JSON.stringify(hist)) });
+  const got = [];
+  B.attach(0, { send: (m) => got.push(m), online: () => true }); B.attach(1, { send: (m) => got.push(m), online: () => true });
+  const pb = B.run();
+  for (let i = 0; i < 20000 && !B.pending.some((x) => x); i++) await new Promise((r) => setImmediate(r));
+  const pendB = B.pending.findIndex((x) => x);
+  assert.equal(pendB, pend, 'la scelta pendente torna allo stesso giocatore');
+  assert.equal(JSON.stringify(B.game.s), stateA, 'stesso stato di prima');
+  assert.equal(JSON.stringify(B.pending[pendB].d), decA, 'stessa decisione');
+  assert.ok(!got.some((m) => m.t === 'beat'), 'durante la ripresa non si mandano messaggi di mosse già fatte');
+  const dec = got.find((m) => m.t === 'decide');
+  assert.ok(dec && dec.evs.length === B.game.events.length, 'la prima scelta porta con sé tutto il log');
+  // e la partita riparte e finisce
+  for (let i = 0; i < 400000 && !B.finished; i++) {
+    for (const sd of [0, 1]) { const pd = B.pending[sd]; if (pd) B.answer(sd, pd.id, ai[sd].decide(B.game, pd.d)); }
+    await new Promise((r) => setImmediate(r));
+  }
+  assert.ok(B.finished && (await pb));
+});

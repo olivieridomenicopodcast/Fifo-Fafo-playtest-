@@ -19,13 +19,22 @@
   function renderResume() {
     const box = $('#resume-box');
     const sv = UI.store.get('save', null);
-    if (!sv || !sv.cfg) { box.innerHTML = ''; return; }
+    const ns = UI.store.get('net_save', null);
+    const netHtml = ns && ns.players ? `<div class="card" style="border-color:var(--accent2)"><h2>📡 Partita in rete in sospeso</h2>
+      <p class="small muted" style="margin-bottom:10px">${esc(ns.players[ns.mySeat].name)} (tu, tavolo) vs ${esc(ns.players[1 - ns.mySeat].name)} · turno ${Math.min(ns.turn || 1, 15)} · l'altro giocatore deve rientrare con lo stesso nome</p>
+      <div class="btn-row"><button class="btn primary" id="nrs-go">▶ Riapri la stanza</button><button class="btn danger" id="nrs-del">Elimina</button></div></div>` : '';
+    if (!sv || !sv.cfg) {
+      box.innerHTML = netHtml;
+      if (netHtml) { $('#nrs-go').onclick = () => UI.netHost(ns); $('#nrs-del').onclick = () => { UI.store.del('net_save'); renderResume(); }; }
+      return;
+    }
     const names = sv.cfg.players.map((p) => esc(p.name)).join(' vs ');
     box.innerHTML = `<div class="card" style="border-color:var(--accent2)"><h2>💾 Partita in corso</h2>
       <p class="small muted" style="margin-bottom:10px">${names} · turno ${Math.min(sv.turn || 1, sv.cfg.rules.turns || 15)} · seed ${esc(sv.cfg.seed)}</p>
       <div class="btn-row"><button class="btn primary" id="rs-go">▶ Riprendi</button><button class="btn danger" id="rs-del">Elimina</button></div></div>`;
     $('#rs-go').onclick = () => { UI.startSession(Object.assign({}, sv.cfg, { speed: sv.cfg.speed || 'normal' }), sv.history); };
     $('#rs-del').onclick = () => { UI.store.del('save'); renderResume(); };
+    if (netHtml) { box.insertAdjacentHTML('beforeend', netHtml); $('#nrs-go').onclick = () => UI.netHost(ns); $('#nrs-del').onclick = () => { UI.store.del('net_save'); renderResume(); }; }
   }
 
   document.addEventListener('DOMContentLoaded', () => {

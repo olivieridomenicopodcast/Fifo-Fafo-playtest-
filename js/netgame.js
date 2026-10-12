@@ -30,11 +30,13 @@
   };
 
   class Runner {
-    /* cfg: { seed, rules, players:[{name,kind:'human'|'ai',level}], takeoverLevel } — links[seat] = { send(msg), online() } */
+    /* cfg: { seed, rules, players:[{name,kind:'human'|'ai',level}], takeoverLevel, replay } — replay = risposte già date (per riprendere una partita salvata) — links[seat] = { send(msg), online() } */
     constructor(cfg) {
       this.cfg = cfg;
       this.seed = cfg.seed == null ? String(Math.floor(Math.random() * 1e9)) : String(cfg.seed);
-      this.game = new FF.Game({ seed: this.seed, rules: cfg.rules, players: cfg.players, beats: true, log: true });
+      this.game = new FF.Game({ seed: this.seed, rules: cfg.rules, players: cfg.players, beats: true, log: true, replay: cfg.replay || [] });
+      this.silent = !!(cfg.replay && cfg.replay.length);   // durante la ripresa non si manda niente: il log arriva con la prima scelta
+      this.onSave = null;
       this.rules = this.game.rules;
       this.links = [null, null];
       this.sent = [0, 0];            // quanti eventi del log ha già ricevuto ciascun giocatore
@@ -99,6 +101,7 @@
       try { return ai.decide(this.game, d); } catch (e) { return FF.AI.greedy(this.game, d); }
     }
     _decide(d) {
+      this.silent = false;
       const seat = d.player;
       if (this.ai[seat]) return Promise.resolve(this._aiAnswer(this.ai[seat], d));
       if (this.takeover[seat]) return Promise.resolve(this._aiAnswer(this.takeover[seat], d));
@@ -123,7 +126,7 @@
         if (this.stopped) return null;
         const d = r.value;
         if (d.type === 'beat') {
-          this._broadcast({ t: 'beat', beat: d.ev.i }, false);
+          if (!this.silent) this._broadcast({ t: 'beat', beat: d.ev.i }, false);
           r = it.next();
           if (++n % 20 === 0) await new Promise((res) => setTimeout(res, 0));   // lascia respirare il browser
           continue;
@@ -131,6 +134,7 @@
         const ans = await this._decide(d);
         if (this.stopped) return null;
         r = it.next(ans);
+        if (this.onSave) { try { this.onSave(g.history.slice()); } catch (e) { /* ok */ } }
       }
       this.finished = true;
       this._broadcast(this._endMsg(), true);

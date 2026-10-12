@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Prova in browser della partita in rete: due contesti Chromium separati (host e ospite) giocano una partita intera con un server PeerJS locale.
-   Uso: NODE_PATH=<cartella con peer>/node_modules node tools/e2e-net.js [--drop]
-   Servono: playwright (Chromium preinstallato) e il pacchetto npm "peer". --drop prova anche caduta e rientro dell'ospite. */
+   Uso: NODE_PATH=<cartella con peer>/node_modules node tools/e2e-net.js [--drop] [--resume]
+   Servono: playwright (Chromium preinstallato) e il pacchetto npm "peer". --drop prova anche caduta e rientro dell'ospite; --resume il tavolo che chiude l'app a metà partita e la riapre dal salvataggio. */
 'use strict';
 const { spawn } = require('child_process');
 const path = require('path');
@@ -9,6 +9,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/opt/node-tools/node_modules/playwright')); }
 const root = path.join(__dirname, '..');
 const DROP = process.argv.includes('--drop');
+const RESUME = process.argv.includes('--resume');   // il tavolo chiude l'app a metà partita e la riapre dal salvataggio
 const exe = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PORT = 8137, PPORT = 9137;
 const url = (q) => `http://localhost:${PORT}/index.html?peerhost=localhost&peerport=${PPORT}${q || ''}`;
@@ -65,11 +66,11 @@ async function botStep(p) {
     await guest.waitForSelector('#g-board', { timeout: 15000 }); await host.waitForSelector('#g-board', { timeout: 15000 });
     check(true, 'la partita è iniziata su entrambi gli schermi');
 
-    let drops = 0, steps = 0, endH = false, endG = false, leakChecked = false;
+    let hostPage = host, resumed = false, drops = 0, steps = 0, endH = false, endG = false, leakChecked = false;
     const t0 = Date.now();
     let guestPage = guest;
     while (Date.now() - t0 < 420000 && !(endH && endG)) {
-      const a = await botStep(host).catch(() => null);
+      const a = await botStep(hostPage).catch(() => null);
       const b = await botStep(guestPage).catch(() => null);
       if (a === 'end') endH = true; if (b === 'end') endG = true;
       if (a || b) steps++;
@@ -86,21 +87,46 @@ async function botStep(p) {
         console.log('  … simulo la caduta dell\'ospite (' + drops + ')');
         const oldCtx = guestPage.context();
         await guestPage.close(); await oldCtx.close();
-        await host.waitForSelector('.overlay [data-w]', { timeout: 20000 });
+        await hostPage.waitForSelector('.overlay [data-w]', { timeout: 20000 });
         check(true, 'il tavolo mostra l\'avviso di disconnessione (caduta ' + drops + ')');
-        await host.click('.overlay [data-w]');
+        await hostPage.click('.overlay [data-w]');
         const ctx2 = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
         guestPage = await ctx2.newPage(); guestPage.on('pageerror', (e) => errs.push('ospite' + (drops + 1) + ': ' + e.message));
         await guestPage.goto(url(`&join=${code}`)); await guestPage.fill('#nj-name', 'Bea'); await guestPage.click('#nl-speed button[data-v="fast"]'); await guestPage.click('#nj-go');
         await guestPage.waitForSelector('#g-board', { timeout: 20000 });
         check(true, 'l\'ospite è rientrato con lo stesso nome e ha ritrovato la partita (rientro ' + drops + ')');
       }
-      await host.waitForTimeout(60);
+      if (RESUME && !resumed && steps > 25) {
+        resumed = true;
+        console.log('  … il tavolo chiude l\'app a metà partita');
+        const turnBefore = await hostPage.evaluate(() => FF.UI.session.game.s.turn);
+        const saved = await hostPage.context().storageState();
+        check(saved.origins.some((o) => o.localStorage.some((x) => x.name === 'ff_net_save')), 'il tavolo ha salvato la partita in rete');
+        await hostPage.close(); await hostPage.context().close();
+        await guestPage.waitForSelector('.overlay [data-r]', { timeout: 30000 });
+        check(true, 'l\'ospite vede "Collegamento perso"');
+        const ctxH2 = await browser.newContext({ viewport: { width: 1400, height: 1000 }, storageState: saved });
+        hostPage = await ctxH2.newPage(); hostPage.on('pageerror', (e) => errs.push('host2: ' + e.message));
+        await hostPage.goto(url()); await hostPage.waitForSelector('#nrs-go');
+        check(true, 'nella home compare "Partita in rete in sospeso"');
+        await hostPage.click('#nrs-go'); await hostPage.click('#nl-speed button[data-v="fast"]');
+        await hostPage.waitForFunction(() => /^[A-Z0-9]{4}$/.test(document.querySelector('#nl-code').textContent.trim()), null, { timeout: 40000 });
+        const code2 = (await hostPage.textContent('#nl-code')).trim();
+        check(code2 === code, 'stessa stanza riaperta con lo stesso codice (' + code2 + ')');
+        await guestPage.click('.overlay [data-r]');
+        await hostPage.waitForFunction(() => !document.querySelector('#nl-go').disabled, null, { timeout: 30000 });
+        await hostPage.click('#nl-go');
+        await hostPage.waitForSelector('#g-board', { timeout: 20000 }); await guestPage.waitForSelector('#g-board', { timeout: 20000 });
+        const turnAfter = await hostPage.evaluate(() => FF.UI.session.game.s.turn);
+        check(turnAfter >= turnBefore, 'la partita riprende dal turno ' + turnBefore + ' (ora ' + turnAfter + ')');
+      }
+      await hostPage.waitForTimeout(60);
     }
     check(endH && endG, 'la partita finisce su entrambi gli schermi (' + steps + ' azioni)');
-    const sh = await host.textContent('.scoreline'), sg = await guestPage.textContent('.scoreline');
+    const sh = await hostPage.textContent('.scoreline'), sg = await guestPage.textContent('.scoreline');
     check(sh === sg && sh.length > 0, 'stesso punteggio finale su entrambi: ' + sh.replace(/\s+/g, ' ').trim());
     if (DROP) check(drops === 2, 'due cadute e due rientri provati');
+    if (RESUME) check(!(await hostPage.evaluate(() => localStorage.getItem('ff_net_save'))), 'a fine partita il salvataggio in rete viene cancellato');
     check(errs.length === 0, 'nessun errore nel browser' + (errs.length ? ': ' + errs.slice(0, 3).join(' / ') : ''));
   } catch (e) { fails.push('eccezione: ' + e.message); console.log('  ✘ ' + e.stack); }
   await browser.close(); procs.forEach((c) => c.kill());

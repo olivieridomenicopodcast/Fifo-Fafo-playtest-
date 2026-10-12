@@ -32,8 +32,9 @@ Plancia 2D illustrata (le 9 stanze sono disegnate e si dispongono ad anello a ca
 - **Vista filtrata**: all'altro giocatore non arrivano mai il seed (da cui si ricostruirebbero le scelte casuali), gli obiettivi segreti dell'avversario (fino a fine partita) né il suo Flow prima della rivelazione. Le scelte private (Flow, obiettivi) viaggiano solo da chi le fa al tavolo.
 - **Caduta e rientro**: battito ogni 4 s, dispositivo perso dopo ~12 s. Il tavolo mostra «Aspetto che torni» / «Gioca l'AI al posto suo»; chi rientra con lo stesso nome riprende da dove era, con la scelta ancora pendente. L'app chiede di tenere lo schermo acceso (Screen Wake Lock) dove supportato.
 - Messaggi in **JSON puro** e piccoli (PeerJS non regge messaggi sopra ~16 KB: il log si manda a pezzi): lo controllano i test in `tests/net.test.js`.
-- **Limiti**: la partita in rete non si salva (se il tavolo chiude l'app, finisce); non provato su iPad/telefoni veri né col servizio pubblico di PeerJS (solo con server locale); su wifi che isolano i dispositivi il collegamento diretto può non partire.
-- Prova nel browser (due contesti Chromium + server PeerJS locale): `NODE_PATH=<cartella con npm i peer>/node_modules node tools/e2e-net.js [--drop]`.
+- **Salvataggio e ripresa**: il tavolo salva la partita sul proprio dispositivo (`localStorage`: seed + risposte date) dopo ogni scelta. Se chiude l'app, nella home compare «Partita in rete in sospeso» → «Riapri la stanza»: la partita si ricostruisce identica (il motore è deterministico), la stanza riapre con lo stesso codice (se è ancora occupato sul servizio PeerJS riprova qualche volta, poi ne propone uno nuovo) e l'altro giocatore rientra con lo stesso nome («Riconnetti»). Il salvataggio vale solo sullo stesso dispositivo e browser e si cancella a fine partita o con «Abbandona».
+- **Limiti**: se nessuno riapre l'app sul tavolo la partita resta ferma; non provato su iPad/telefoni veri né col servizio pubblico di PeerJS (solo con server locale); su wifi che isolano i dispositivi il collegamento diretto può non partire.
+- Prova nel browser (due contesti Chromium + server PeerJS locale): `NODE_PATH=<cartella con npm i peer>/node_modules node tools/e2e-net.js [--drop] [--resume]`.
 
 ## Da riga di comando
 ```
