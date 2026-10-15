@@ -42,6 +42,7 @@ npm test                                   # test sulle regole e sulla rete
 node tools/sim.js --games 500 --a hard --b medium --out report.md
 node tools/sim.js --games 300 --rule handLimit=3 --log 2
 ```
+Simulazioni sperimentali a 3-4 giocatori (copie del motore, senza toccare il gioco): vedi `tools/nplayers/README.md`.
 
 ## Architettura
 | File | Ruolo |
